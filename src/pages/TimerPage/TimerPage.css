@@ -1,0 +1,883 @@
+.tra-app {
+  --tra-ink: #e8f0f3;
+  --tra-muted: #7c8d96;
+  --tra-dim: #6b7f88;
+  --tra-line: rgba(125, 161, 180, 0.2);
+  --tra-line-soft: rgba(125, 161, 180, 0.11);
+  --tra-surface: #040809;
+  --tra-stage: #010304;
+  --tra-blue: #9ec6e4;
+  --tra-orange: #e26b3b;
+  min-height: 100vh;
+  overflow: hidden;
+  color: var(--tra-ink);
+  background: var(--tra-surface);
+  font-family: "Avenir Next", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+
+.tra-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 74px;
+  padding: 0 clamp(20px, 3vw, 48px);
+  border-bottom: 1px solid var(--tra-line-soft);
+  background: rgba(3, 7, 8, 0.95);
+  letter-spacing: 0.13em;
+  font-size: 10px;
+}
+
+.tra-brand,
+.tra-header-actions,
+.tra-status,
+.tra-header-github,
+.tra-header-reset {
+  display: flex;
+  align-items: center;
+}
+
+.tra-brand {
+  gap: 14px;
+  white-space: nowrap;
+}
+
+.tra-brand-mark {
+  color: var(--tra-ink);
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+}
+
+.tra-brand-rule {
+  width: 34px;
+  height: 1px;
+  background: var(--tra-line);
+}
+
+.tra-brand-copy,
+.tra-header-reset,
+.tra-header-github,
+.tra-status {
+  color: var(--tra-muted);
+  font-size: 9px;
+  letter-spacing: 0.18em;
+}
+
+.tra-header-actions {
+  gap: clamp(18px, 3vw, 42px);
+}
+
+.tra-status {
+  gap: 9px;
+}
+
+.tra-status-dot,
+.tra-caption-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #58676f;
+  box-shadow: 0 0 0 3px rgba(88, 103, 111, 0.11);
+}
+
+.tra-status.is-live {
+  color: var(--tra-ink);
+}
+
+.tra-status.is-live .tra-status-dot,
+.tra-visual-shell.is-complete .tra-caption-dot {
+  background: var(--tra-orange);
+  box-shadow: 0 0 0 3px rgba(226, 107, 59, 0.13), 0 0 18px rgba(226, 107, 59, 0.62);
+}
+
+.tra-header-reset,
+.tra-secondary-action,
+.tra-primary-action,
+.tra-presets button {
+  border: 0;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.tra-header-reset {
+  gap: 8px;
+  min-height: 44px;
+  padding: 0;
+  background: transparent;
+  transition: color 180ms ease;
+}
+
+.tra-header-github {
+  gap: 7px;
+  min-height: 44px;
+  color: var(--tra-muted);
+  text-decoration: none;
+  transition: color 180ms ease;
+}
+
+.tra-header-reset:hover,
+.tra-header-reset:focus-visible,
+.tra-header-github:hover,
+.tra-header-github:focus-visible {
+  color: var(--tra-ink);
+}
+
+.tra-workspace {
+  display: grid;
+  grid-template-columns: minmax(276px, 324px) minmax(0, 1fr);
+  min-height: calc(100vh - 74px);
+}
+
+.tra-controls {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 74px);
+  overflow-y: auto;
+  padding: clamp(32px, 5vh, 66px) clamp(24px, 3vw, 46px) 28px;
+  border-right: 1px solid var(--tra-line-soft);
+  background:
+    linear-gradient(180deg, rgba(8, 16, 18, 0.78), rgba(4, 8, 9, 0.98) 42%),
+    var(--tra-surface);
+}
+
+.tra-intro {
+  margin-bottom: clamp(36px, 7vh, 82px);
+}
+
+.tra-section-label,
+.tra-field-label,
+.tra-stage-meta,
+.tra-stage-footer,
+.tra-stage-caption,
+.tra-stage-time small,
+.tra-controls-footer {
+  font-size: 9px;
+  letter-spacing: 0.19em;
+  text-transform: uppercase;
+}
+
+.tra-section-label {
+  margin: 0 0 20px;
+  color: var(--tra-orange);
+}
+
+.tra-intro h1 {
+  margin: 0;
+  color: var(--tra-ink);
+  font-size: clamp(32px, 3vw, 44px);
+  font-weight: 300;
+  letter-spacing: -0.045em;
+  line-height: 0.98;
+}
+
+.tra-intro h1 span {
+  color: var(--tra-blue);
+  font-style: italic;
+}
+
+.tra-intro-copy {
+  max-width: 23ch;
+  margin: 23px 0 0;
+  color: var(--tra-muted);
+  font-size: 12px;
+  line-height: 1.8;
+}
+
+.tra-mode-switch {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin-bottom: clamp(30px, 4vh, 48px);
+  border-top: 1px solid var(--tra-line-soft);
+  border-bottom: 1px solid var(--tra-line-soft);
+}
+
+.tra-mode-switch button {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 4px;
+  min-height: 56px;
+  padding: 9px 12px 9px 1px;
+  border: 0;
+  border-right: 1px solid var(--tra-line-soft);
+  color: var(--tra-dim);
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: color 180ms ease, background 180ms ease;
+}
+
+.tra-mode-switch button:last-child {
+  border-right: 0;
+  padding-left: 14px;
+}
+
+.tra-mode-switch button::after {
+  position: absolute;
+  right: 12px;
+  bottom: -1px;
+  left: 1px;
+  height: 1px;
+  background: var(--tra-orange);
+  content: "";
+  opacity: 0;
+  transform: scaleX(0.3);
+  transform-origin: left;
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.tra-mode-switch button:last-child::after {
+  right: 1px;
+  left: 14px;
+}
+
+.tra-mode-switch button span {
+  color: inherit;
+  font-size: 9px;
+  letter-spacing: 0.16em;
+}
+
+.tra-mode-switch button small {
+  color: var(--tra-dim);
+  font-size: 10px;
+  letter-spacing: 0.05em;
+}
+
+.tra-mode-switch button:hover,
+.tra-mode-switch button:focus-visible,
+.tra-mode-switch button.is-selected {
+  color: var(--tra-ink);
+  background: rgba(17, 34, 42, 0.36);
+}
+
+.tra-mode-switch button.is-selected::after {
+  opacity: 1;
+  transform: scaleX(1);
+}
+
+.tra-control-group {
+  margin-bottom: 34px;
+}
+
+.tra-field-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 15px;
+  color: var(--tra-ink);
+  font-size: 9px;
+}
+
+.tra-field-suffix {
+  color: var(--tra-dim);
+  font-size: 8px;
+}
+
+.tra-duration-input {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(158, 198, 228, 0.38);
+  transition: border-color 180ms ease;
+}
+
+.tra-duration-input:focus-within {
+  border-color: var(--tra-orange);
+}
+
+.tra-duration-input input {
+  width: 100%;
+  min-width: 0;
+  padding: 0 0 9px;
+  border: 0;
+  outline: 0;
+  color: var(--tra-ink);
+  background: transparent;
+  font-family: inherit;
+  font-size: 39px;
+  font-weight: 300;
+  letter-spacing: -0.06em;
+  line-height: 1;
+}
+
+.tra-duration-input input::-webkit-inner-spin-button,
+.tra-duration-input input::-webkit-outer-spin-button {
+  display: none;
+}
+
+.tra-duration-input input {
+  appearance: textfield;
+}
+
+.tra-duration-input span {
+  padding-bottom: 11px;
+  color: var(--tra-muted);
+  font-size: 9px;
+  letter-spacing: 0.18em;
+}
+
+.tra-sequence-input {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(158, 198, 228, 0.38);
+  transition: border-color 180ms ease;
+}
+
+.tra-sequence-input:focus-within {
+  border-color: var(--tra-orange);
+}
+
+.tra-sequence-input input {
+  width: 100%;
+  min-width: 0;
+  padding: 0 0 9px;
+  border: 0;
+  outline: 0;
+  color: var(--tra-ink);
+  background: transparent;
+  font-family: inherit;
+  font-size: 34px;
+  font-weight: 300;
+  letter-spacing: 0.16em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.tra-sequence-input span {
+  flex: 0 0 auto;
+  padding: 0 0 11px 8px;
+  color: var(--tra-muted);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+}
+
+.tra-letter-steps {
+  display: flex;
+  min-width: 0;
+  overflow-x: auto;
+  border-top: 1px solid var(--tra-line-soft);
+  border-bottom: 1px solid var(--tra-line-soft);
+  scrollbar-width: thin;
+  scrollbar-color: rgba(125, 161, 180, 0.3) transparent;
+}
+
+.tra-letter-step {
+  display: flex;
+  flex: 1 0 36px;
+  flex-direction: column;
+  gap: 7px;
+  min-height: 62px;
+  padding: 10px 7px 8px;
+  border-right: 1px solid var(--tra-line-soft);
+  color: var(--tra-dim);
+  background: transparent;
+  transition: color 180ms ease, background 180ms ease;
+}
+
+.tra-letter-step:last-child {
+  border-right: 0;
+}
+
+.tra-letter-step small {
+  color: inherit;
+  font-size: 8px;
+  letter-spacing: 0.12em;
+}
+
+.tra-letter-step strong {
+  color: inherit;
+  font-size: 19px;
+  font-weight: 300;
+  letter-spacing: 0.04em;
+  line-height: 1;
+}
+
+.tra-letter-step.is-past {
+  color: var(--tra-blue);
+}
+
+.tra-letter-step.is-current {
+  color: var(--tra-ink);
+  background: rgba(22, 47, 61, 0.48);
+}
+
+.tra-letter-step.is-current strong {
+  color: var(--tra-orange);
+}
+
+.tra-duration-hint {
+  margin: 9px 0 0;
+  color: var(--tra-dim);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+}
+
+.tra-presets {
+  border-top: 1px solid var(--tra-line-soft);
+}
+
+.tra-presets button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 0 0 1px;
+  border-bottom: 1px solid var(--tra-line-soft);
+  color: var(--tra-muted);
+  background: transparent;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-align: left;
+  transition: color 180ms ease, transform 180ms ease, border-color 180ms ease;
+}
+
+.tra-presets button svg {
+  opacity: 0;
+  color: var(--tra-orange);
+  transform: translate(-4px, 4px);
+  transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.tra-presets button:hover,
+.tra-presets button:focus-visible,
+.tra-presets button.is-selected {
+  border-color: rgba(226, 107, 59, 0.4);
+  color: var(--tra-ink);
+  transform: translateX(7px);
+}
+
+.tra-presets button:hover svg,
+.tra-presets button:focus-visible svg,
+.tra-presets button.is-selected svg {
+  opacity: 1;
+  transform: translate(0, 0);
+}
+
+.tra-actions {
+  margin-top: auto;
+}
+
+.tra-primary-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 51px;
+  padding: 0 14px;
+  border: 1px solid rgba(226, 107, 59, 0.5);
+  border-radius: 2px;
+  color: #fff4ee;
+  background: rgba(169, 63, 32, 0.88);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.13em;
+  transition: background 180ms ease, border-color 180ms ease, transform 180ms ease;
+}
+
+.tra-primary-action:hover,
+.tra-primary-action:focus-visible {
+  border-color: #f08a5c;
+  background: #b84d2d;
+  transform: translateY(-1px);
+}
+
+.tra-secondary-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.tra-secondary-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 8px;
+  border: 1px solid var(--tra-line);
+  border-radius: 2px;
+  color: var(--tra-muted);
+  background: rgba(14, 22, 24, 0.58);
+  font-size: 8px;
+  letter-spacing: 0.13em;
+  transition: border-color 180ms ease, color 180ms ease, background 180ms ease;
+}
+
+.tra-secondary-action:hover,
+.tra-secondary-action:focus-visible,
+.tra-secondary-action.is-on {
+  border-color: rgba(158, 198, 228, 0.52);
+  color: var(--tra-ink);
+  background: rgba(20, 38, 47, 0.68);
+}
+
+.tra-controls-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 25px;
+  color: var(--tra-dim);
+  line-height: 1.5;
+}
+
+.tra-controls-footer > span:first-child {
+  max-width: 21ch;
+}
+
+.tra-shortcuts {
+  white-space: nowrap;
+  color: var(--tra-muted);
+}
+
+.tra-stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: calc(100vh - 74px);
+  padding: 22px clamp(18px, 3vw, 50px) 20px;
+  background: var(--tra-stage);
+}
+
+.tra-stage-meta,
+.tra-stage-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  min-height: 20px;
+  color: var(--tra-dim);
+  line-height: 1.4;
+}
+
+.tra-stage-meta span:first-child {
+  color: var(--tra-muted);
+}
+
+.tra-visual-shell {
+  position: relative;
+  flex: 1;
+  min-height: 560px;
+  overflow: hidden;
+  border: 1px solid rgba(88, 127, 150, 0.18);
+  background: #010304;
+}
+
+.tra-visual-shell::before,
+.tra-visual-shell::after {
+  position: absolute;
+  z-index: 1;
+  pointer-events: none;
+  content: "";
+}
+
+.tra-visual-shell::before {
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(1, 3, 4, 0.42), transparent 18%, transparent 82%, rgba(1, 3, 4, 0.42)),
+    linear-gradient(180deg, rgba(1, 3, 4, 0.24), transparent 20%, transparent 76%, rgba(1, 3, 4, 0.48));
+}
+
+.tra-visual-shell::after {
+  right: 0;
+  bottom: 31px;
+  left: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(55, 101, 132, 0.15), transparent);
+}
+
+.tra-stage-word {
+  position: absolute;
+  z-index: 2;
+  top: 52%;
+  left: calc(50% + clamp(176px, 22vw, 300px));
+  color: rgba(228, 237, 241, 0.88);
+  font-size: clamp(13px, 1.5vw, 21px);
+  font-weight: 300;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  transform: translateY(-50%);
+  animation: tra-word-in 600ms cubic-bezier(0.2, 0.75, 0.2, 1) both;
+}
+
+.tra-stage-word:not(.is-sequence) span {
+  color: var(--tra-orange);
+}
+
+.tra-stage-word.is-sequence {
+  display: flex;
+  max-width: min(44vw, 420px);
+  gap: clamp(7px, 1vw, 14px);
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.tra-stage-word.is-sequence > span {
+  color: rgba(228, 237, 241, 0.4);
+  transition: color 220ms ease, transform 220ms ease, text-shadow 220ms ease;
+}
+
+.tra-stage-word.is-sequence > span.is-past {
+  color: rgba(158, 198, 228, 0.76);
+}
+
+.tra-stage-word.is-sequence > span.is-current {
+  color: var(--tra-orange);
+  text-shadow: 0 0 18px rgba(226, 107, 59, 0.34);
+  transform: translateY(-2px);
+}
+
+.tra-stage-caption {
+  position: absolute;
+  z-index: 2;
+  bottom: 24px;
+  left: 27px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--tra-muted);
+}
+
+.tra-caption-dot {
+  width: 5px;
+  height: 5px;
+}
+
+.tra-stage-time {
+  position: absolute;
+  z-index: 2;
+  right: 27px;
+  bottom: 22px;
+  display: flex;
+  align-items: baseline;
+  gap: 11px;
+  color: var(--tra-ink);
+}
+
+.tra-stage-time span {
+  font-size: 13px;
+  font-weight: 300;
+  letter-spacing: 0.08em;
+}
+
+.tra-stage-time small {
+  color: var(--tra-dim);
+}
+
+.tra-sr-timer {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.tra-stage-cross {
+  position: absolute;
+  z-index: 2;
+  width: 11px;
+  height: 11px;
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.tra-stage-cross::before,
+.tra-stage-cross::after {
+  position: absolute;
+  background: rgba(151, 198, 226, 0.55);
+  content: "";
+}
+
+.tra-stage-cross::before {
+  top: 5px;
+  left: 0;
+  width: 11px;
+  height: 1px;
+}
+
+.tra-stage-cross::after {
+  top: 0;
+  left: 5px;
+  width: 1px;
+  height: 11px;
+}
+
+.tra-stage-cross-top {
+  top: 26px;
+  left: 27px;
+}
+
+.tra-stage-cross-bottom {
+  right: 27px;
+  bottom: 26px;
+}
+
+.tra-stage-footer {
+  padding-top: 16px;
+}
+
+.tra-stage-footer span:last-child {
+  color: var(--tra-muted);
+}
+
+button:focus-visible,
+input:focus-visible {
+  outline: 1px solid var(--tra-orange);
+  outline-offset: 4px;
+}
+
+@keyframes tra-word-in {
+  from {
+    opacity: 0;
+    filter: blur(5px);
+    transform: translate(-7px, -50%);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translate(0, -50%);
+  }
+}
+
+@media (max-width: 900px) {
+  .tra-workspace {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .tra-stage {
+    order: 1;
+    min-height: 76vh;
+  }
+
+  .tra-visual-shell {
+    min-height: 540px;
+  }
+
+  .tra-controls {
+    order: 2;
+    min-height: auto;
+    padding-top: 38px;
+    border-top: 1px solid var(--tra-line-soft);
+    border-right: 0;
+  }
+
+  .tra-intro {
+    margin-bottom: 38px;
+  }
+
+  .tra-actions {
+    margin-top: 10px;
+  }
+}
+
+@media (max-width: 560px) {
+  .tra-header {
+    min-height: 62px;
+  }
+
+  .tra-brand-copy,
+  .tra-status {
+    display: none;
+  }
+
+  .tra-workspace,
+  .tra-controls,
+  .tra-stage {
+    min-height: 0;
+  }
+
+  .tra-stage {
+    padding: 15px 12px 16px;
+  }
+
+  .tra-stage-meta,
+  .tra-stage-footer {
+    font-size: 8px;
+  }
+
+  .tra-stage-meta span:last-child,
+  .tra-stage-footer span:first-child {
+    display: none;
+  }
+
+  .tra-visual-shell {
+    min-height: min(72vh, 540px);
+  }
+
+  .tra-stage-word {
+    top: 23%;
+    right: 19px;
+    left: auto;
+    font-size: 12px;
+    transform: none;
+  }
+
+  .tra-stage-word.is-sequence {
+    max-width: calc(100% - 38px);
+    gap: 6px;
+    justify-content: flex-end;
+  }
+
+  .tra-stage-caption {
+    bottom: 18px;
+    left: 17px;
+    font-size: 8px;
+  }
+
+  .tra-stage-time {
+    right: 17px;
+    bottom: 16px;
+  }
+
+  .tra-stage-time span {
+    font-size: 11px;
+  }
+
+  .tra-stage-time small {
+    display: none;
+  }
+
+  .tra-stage-cross-top {
+    top: 18px;
+    left: 17px;
+  }
+
+  .tra-stage-cross-bottom {
+    right: 17px;
+    bottom: 20px;
+  }
+
+  .tra-controls {
+    padding: 34px 20px 24px;
+  }
+
+  .tra-intro h1 {
+    font-size: 38px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tra-stage-word {
+    animation: none;
+  }
+
+  .tra-primary-action,
+  .tra-secondary-action,
+  .tra-presets button,
+  .tra-presets button svg {
+    transition-duration: 0.01ms;
+  }
+}

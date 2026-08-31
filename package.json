@@ -1,6 +1,6 @@
 {
   "name": "hotpot-timer",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "scripts": {
     "dev": "vite",
     "start": "vite",
@@ -9,11 +9,12 @@
     "publish": "bash publish.bash"
   },
   "dependencies": {
+    "@ant-design/icons": "^5.0.1",
     "@types/downloadjs": "^1.4.3",
     "@types/mockjs": "^1.0.6",
     "@types/react-split-pane": "^0.1.67",
+    "@types/three": "^0.156.0",
     "add": "^2.0.6",
-    "@ant-design/icons": "^5.0.1",
     "antd": "^5.1.7",
     "date-fns": "^4.1.0",
     "downloadjs": "^1.4.7",
@@ -35,7 +36,8 @@
     "react-router-dom": "^6.8.0",
     "react-split-pane": "^0.1.92",
     "react-syntax-highlighter": "^15.4.5",
-    "react-toastify": "^8.1.0"
+    "react-toastify": "^8.1.0",
+    "three": "^0.156.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss7-compat": "^2.2.17",
@@ -54,8 +56,8 @@
     "typescript": "^4.4.4",
     "vite": "^2.7.1"
   },
-  "description": "火锅定时计时器 - 小桑作品集",
-  "main": ".eslintrc.js",
+  "description": "A cinematic Three.js countdown and one-letter-at-a-time alphabet study.",
+  "main": "src/main.tsx",
   "directories": {
     "doc": "docs"
   },
@@ -63,9 +65,15 @@
     "type": "git",
     "url": "git+https://github.com/holynova/hotpot-timer.git"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "three.js",
+    "webgl",
+    "countdown",
+    "typography",
+    "generative-ui"
+  ],
+  "author": "holynova <holy_nova@126.com>",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/holynova/hotpot-timer/issues"
   },
