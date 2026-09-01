@@ -26,13 +26,21 @@ interface BlockState {
   targetPosition: THREE.Vector3;
   targetRotation: THREE.Euler;
   targetScale: number;
+  vortexPosition: THREE.Vector3;
+  exitPosition: THREE.Vector3;
+  vortexAngle: number;
+  vortexRadius: number;
+  direction: number;
+  spin: number;
   seed: number;
 }
 
 const MAX_BLOCKS = 84;
-const BLOCK_SIZE = 0.48;
-const CELL_SIZE = 0.62;
-const TRANSITION_DURATION = 0.95;
+const BLOCK_SIZE = 0.3;
+const CELL_SIZE = 0.43;
+const TRANSITION_DURATION = 1.12;
+const DISPERSE_END = 0.44;
+const ASSEMBLE_START = 0.4;
 
 const DIGIT_GRID: Record<string, string[]> = {
   "0": ["01110", "11011", "11011", "11011", "11011", "11011", "01110"],
@@ -101,7 +109,7 @@ const getGlyphPoints = (displayGlyph: string) => {
           new THREE.Vector3(
             glyphOffset + (columnIndex - 2) * CELL_SIZE,
             (3 - rowIndex) * CELL_SIZE,
-            0.22,
+            0.18,
           ),
         );
       });
@@ -162,10 +170,10 @@ const TraCountdownCanvas: React.FC<TraCountdownCanvasProps> = ({ glyph, isRunnin
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x010304);
-    scene.fog = new THREE.FogExp2(0x010304, 0.032);
+    scene.fog = new THREE.FogExp2(0x010304, 0.022);
 
-    const camera = new THREE.PerspectiveCamera(34, 1, 0.1, 100);
-    camera.position.set(0, 0, 9.5);
+    const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 100);
+    camera.position.set(0, 0, 10.5);
     camera.lookAt(0, 0, 0);
 
     let renderer: THREE.WebGLRenderer;
@@ -206,9 +214,14 @@ const TraCountdownCanvas: React.FC<TraCountdownCanvasProps> = ({ glyph, isRunnin
     rimLight.position.set(0, -1.2, -1.8);
     scene.add(rimLight);
 
-    const blockGeometry = new RoundedBoxGeometry(BLOCK_SIZE, BLOCK_SIZE, 0.28, 5, 0.09);
-    const blockMaterial = new THREE.MeshBasicMaterial({
-      color: 0xf4f8fa,
+    const blockGeometry = new RoundedBoxGeometry(BLOCK_SIZE, BLOCK_SIZE, 0.18, 5, 0.06);
+    const blockMaterial = new THREE.MeshStandardMaterial({
+      color: 0xffffff,
+      roughness: 0.38,
+      metalness: 0.05,
+      emissive: 0xb8d0d8,
+      emissiveIntensity: 0.5,
+      vertexColors: true,
       toneMapped: false,
     });
     const blocks = new THREE.InstancedMesh(blockGeometry, blockMaterial, MAX_BLOCKS);
@@ -218,7 +231,8 @@ const TraCountdownCanvas: React.FC<TraCountdownCanvasProps> = ({ glyph, isRunnin
     const blockStates: BlockState[] = Array.from({ length: MAX_BLOCKS }, (_, index) => {
       const position = getRandomPosition();
       const rotation = new THREE.Euler(randomBetween(-1.2, 1.2), randomBetween(-1.2, 1.2), randomBetween(-1.2, 1.2));
-      const color = new THREE.Color().setHSL(0.55, 0.1, randomBetween(0.84, 0.98));
+      const brightness = randomBetween(0.92, 1);
+      const color = new THREE.Color().setRGB(brightness, brightness, brightness);
       blocks.setColorAt(index, color);
 
       return {
@@ -231,6 +245,12 @@ const TraCountdownCanvas: React.FC<TraCountdownCanvasProps> = ({ glyph, isRunnin
         targetPosition: position.clone(),
         targetRotation: new THREE.Euler(),
         targetScale: 0,
+        vortexPosition: position.clone(),
+        exitPosition: position.clone(),
+        vortexAngle: randomBetween(0, Math.PI * 2),
+        vortexRadius: randomBetween(0.35, 1.1),
+        direction: index % 2 === 0 ? -1 : 1,
+        spin: randomBetween(0.8, 1.55),
         seed: Math.random() * Math.PI * 2,
       };
     });
@@ -239,9 +259,11 @@ const TraCountdownCanvas: React.FC<TraCountdownCanvasProps> = ({ glyph, isRunnin
     }
 
     const dummy = new THREE.Object3D();
+    const zAxis = new THREE.Vector3(0, 0, 1);
     const clock = new THREE.Clock();
     let transitionStart = 0;
     let transitionDuration = reducedMotion ? 0.18 : TRANSITION_DURATION;
+    let transitionStyle: "intro" | "morph" = "intro";
     let currentGlyph = "";
     let animationFrame = 0;
     let running = isRunning;
@@ -258,23 +280,48 @@ const TraCountdownCanvas: React.FC<TraCountdownCanvasProps> = ({ glyph, isRunnin
       }
 
       const targetPoints = getGlyphPoints(nextDisplayGlyph || "0");
+      const isInitialTransition = currentGlyph === "";
       transitionStart = clock.getElapsedTime();
-      transitionDuration = reducedMotion ? 0.18 : nextDisplayGlyph.length > 1 ? 1.05 : TRANSITION_DURATION;
+      transitionStyle = isInitialTransition ? "intro" : "morph";
+      transitionDuration = reducedMotion
+        ? 0.18
+        : isInitialTransition
+          ? 0.72
+          : nextDisplayGlyph.length > 1
+            ? 1.18
+            : TRANSITION_DURATION;
 
       blockStates.forEach((block, index) => {
         block.fromPosition.copy(block.position);
         block.fromRotation.copy(block.rotation);
         block.fromScale = block.scale;
 
+        const vortexAngle = randomBetween(0, Math.PI * 2);
+        const vortexRadius = randomBetween(0.16, 0.92);
+        block.vortexAngle = vortexAngle;
+        block.vortexRadius = randomBetween(0.38, 1.18);
+        block.direction = index % 2 === 0 ? -1 : 1;
+        block.spin = randomBetween(0.8, 1.7);
+        block.vortexPosition.set(
+          Math.cos(vortexAngle) * vortexRadius,
+          Math.sin(vortexAngle) * vortexRadius * 0.62,
+          randomBetween(-0.28, 0.3),
+        );
+        const exitAngle = vortexAngle + block.direction * randomBetween(0.7, 2.4);
+        const exitRadius = randomBetween(2.7, 4.8);
+        block.exitPosition.set(
+          Math.cos(exitAngle) * exitRadius,
+          Math.sin(exitAngle) * exitRadius * 0.68,
+          randomBetween(-1.2, 0.4),
+        );
+
         const target = targetPoints[index];
         if (target) {
           block.targetPosition.copy(target);
-          block.targetRotation.set(randomBetween(-0.025, 0.025), randomBetween(-0.025, 0.025), randomBetween(-0.035, 0.035));
+          block.targetRotation.set(randomBetween(-0.04, 0.04), randomBetween(-0.04, 0.04), randomBetween(-0.06, 0.06));
           block.targetScale = 1;
         } else {
-          const angle = randomBetween(0, Math.PI * 2);
-          const radius = randomBetween(2.7, 5.3);
-          block.targetPosition.set(Math.cos(angle) * radius, Math.sin(angle) * radius * 0.68, randomBetween(-1.4, 0.5));
+          block.targetPosition.copy(block.exitPosition);
           block.targetRotation.set(randomBetween(-1.8, 1.8), randomBetween(-1.8, 1.8), randomBetween(-1.8, 1.8));
           block.targetScale = 0;
         }
@@ -297,7 +344,7 @@ const TraCountdownCanvas: React.FC<TraCountdownCanvasProps> = ({ glyph, isRunnin
       const positions = new Float32Array(count * 3);
       for (let index = 0; index < count; index += 1) {
         positions[index * 3] = randomBetween(-8.6, 8.6);
-        positions[index * 3 + 1] = randomBetween(-3.5, 4.2);
+        positions[index * 3 + 1] = randomBetween(-2.6, 4.4);
         positions[index * 3 + 2] = randomBetween(depthMin, depthMax);
       }
 
@@ -317,12 +364,12 @@ const TraCountdownCanvas: React.FC<TraCountdownCanvasProps> = ({ glyph, isRunnin
       return { points, geometry, material, speed: randomBetween(0.015, 0.035) };
     };
 
-    const farStars = createStars(220, 0.055, 0.52, -4.5, -1.8);
-    const nearStars = createStars(90, 0.09, 0.7, -1.6, -0.6);
+    const farStars = createStars(280, 0.038, 0.46, -4.5, -1.8);
+    const nearStars = createStars(84, 0.066, 0.62, -1.6, -0.6);
 
     const beamGeometry = new THREE.BufferGeometry();
-    const beamLength = 6.4;
-    const beamWidth = 0.72;
+    const beamLength = 7.2;
+    const beamWidth = 0.3;
     beamGeometry.setAttribute(
       "position",
       new THREE.Float32BufferAttribute(
@@ -333,11 +380,11 @@ const TraCountdownCanvas: React.FC<TraCountdownCanvasProps> = ({ glyph, isRunnin
     beamGeometry.setAttribute("uv", new THREE.Float32BufferAttribute([0, 0.5, 1, 0, 1, 1], 2));
     const beamMaterial = createBeamMaterial();
 
-    for (let index = 0; index < 12; index += 1) {
+    for (let index = 0; index < 18; index += 1) {
       const beam = new THREE.Mesh(beamGeometry, beamMaterial);
-      beam.rotation.z = (index / 12) * Math.PI * 2 + 0.06;
-      beam.position.z = -0.72;
-      beam.scale.setScalar(randomBetween(0.72, 1.08));
+      beam.rotation.z = (index / 18) * Math.PI * 2 + 0.06;
+      beam.position.z = -0.62;
+      beam.scale.setScalar(randomBetween(0.82, 1.12));
       beamsGroup.add(beam);
     }
 
@@ -346,9 +393,9 @@ const TraCountdownCanvas: React.FC<TraCountdownCanvasProps> = ({ glyph, isRunnin
       const height = Math.max(1, container.clientHeight);
       const aspect = width / height;
       camera.aspect = aspect;
-      camera.fov = aspect < 0.82 ? 42 : 34;
-      camera.position.z = aspect < 0.82 ? 11.5 : 9.5;
-      world.scale.setScalar(aspect < 0.82 ? 0.78 : 0.7);
+      camera.fov = aspect < 0.82 ? 38 : 30;
+      camera.position.z = aspect < 0.82 ? 11.8 : 10.5;
+      world.scale.setScalar(aspect < 0.82 ? 0.76 : 0.66);
       camera.updateProjectionMatrix();
       renderer.setSize(width, height, false);
     };
@@ -379,7 +426,7 @@ const TraCountdownCanvas: React.FC<TraCountdownCanvasProps> = ({ glyph, isRunnin
       const attribute = starField.geometry.getAttribute("position") as THREE.BufferAttribute;
       for (let index = 0; index < attribute.count; index += 1) {
         const nextY = attribute.getY(index) - delta * starField.speed * factor;
-        attribute.setY(index, nextY < -4.2 ? 4.3 : nextY);
+        attribute.setY(index, nextY < -3.1 ? 4.5 : nextY);
       }
       attribute.needsUpdate = true;
     };
@@ -396,21 +443,61 @@ const TraCountdownCanvas: React.FC<TraCountdownCanvasProps> = ({ glyph, isRunnin
       world.rotation.x += (-pointerY * 0.028 - world.rotation.x) * 0.035;
       world.position.x += (pointerX * 0.08 - world.position.x) * 0.035;
       world.position.y += (-pointerY * 0.055 - world.position.y) * 0.035;
-      beamsGroup.rotation.z += delta * 0.012 * speedFactor;
+      beamsGroup.rotation.z += delta * 0.008 * speedFactor;
 
       const transitionProgress = Math.min(1, Math.max(0, (elapsed - transitionStart) / transitionDuration));
       const easedProgress = 1 - Math.pow(1 - transitionProgress, 4);
       const settleProgress = 1 - easedProgress;
+      const transitionEnergy = transitionStyle === "morph" ? Math.sin(Math.PI * transitionProgress) : 0;
       const completePulse = complete && !reducedMotion ? 1 + Math.sin(elapsed * 3.2) * 0.06 : 1;
 
       blockStates.forEach((block, index) => {
-        block.position.lerpVectors(block.fromPosition, block.targetPosition, easedProgress);
-        block.rotation.x = THREE.MathUtils.lerp(block.fromRotation.x, block.targetRotation.x, easedProgress);
-        block.rotation.y = THREE.MathUtils.lerp(block.fromRotation.y, block.targetRotation.y, easedProgress);
-        block.rotation.z = THREE.MathUtils.lerp(block.fromRotation.z, block.targetRotation.z, easedProgress);
-        block.scale = THREE.MathUtils.lerp(block.fromScale, block.targetScale, easedProgress);
+        if (transitionStyle === "intro" || reducedMotion) {
+          block.position.lerpVectors(block.fromPosition, block.targetPosition, easedProgress);
+          block.rotation.x = THREE.MathUtils.lerp(block.fromRotation.x, block.targetRotation.x, easedProgress);
+          block.rotation.y = THREE.MathUtils.lerp(block.fromRotation.y, block.targetRotation.y, easedProgress);
+          block.rotation.z = THREE.MathUtils.lerp(block.fromRotation.z, block.targetRotation.z, easedProgress);
+          block.scale = THREE.MathUtils.lerp(block.fromScale, block.targetScale, easedProgress);
+        } else {
+          const disperseProgress = Math.min(1, Math.max(0, transitionProgress / DISPERSE_END));
+          const disperseEase = 1 - Math.pow(1 - disperseProgress, 3);
+          const assembleProgress = Math.min(1, Math.max(0, (transitionProgress - ASSEMBLE_START) / (1 - ASSEMBLE_START)));
+          const assembleEase = 1 - Math.pow(1 - assembleProgress, 3);
+          const spin = block.direction * block.spin * (1 - assembleEase);
 
-        const turbulence = settleProgress * (reducedMotion ? 0.02 : 0.18);
+          if (transitionProgress < DISPERSE_END) {
+            block.position.copy(block.fromPosition);
+            block.position.applyAxisAngle(zAxis, block.direction * disperseEase * 0.62);
+            block.position.lerp(block.vortexPosition, disperseEase);
+            const orbit = Math.sin(disperseEase * Math.PI) * block.vortexRadius;
+            const orbitAngle = block.vortexAngle + block.direction * disperseEase * 1.6;
+            block.position.x += Math.cos(orbitAngle) * orbit;
+            block.position.y += Math.sin(orbitAngle) * orbit * 0.62;
+            block.scale = THREE.MathUtils.lerp(block.fromScale, block.targetScale > 0 ? 0.68 : 0.55, disperseEase);
+          } else if (block.targetScale > 0) {
+            block.position.lerpVectors(block.vortexPosition, block.targetPosition, assembleEase);
+            const orbit = Math.sin(assembleEase * Math.PI) * block.vortexRadius * 0.24;
+            const orbitAngle = block.vortexAngle + block.direction * (1 - assembleEase) * 1.3;
+            block.position.x += Math.cos(orbitAngle) * orbit;
+            block.position.y += Math.sin(orbitAngle) * orbit * 0.62;
+            block.scale = THREE.MathUtils.lerp(0.68, block.targetScale, assembleEase);
+          } else {
+            block.position.lerpVectors(block.vortexPosition, block.targetPosition, assembleEase);
+            const orbit = Math.sin(assembleEase * Math.PI) * block.vortexRadius * 0.2;
+            const orbitAngle = block.vortexAngle + block.direction * (1 - assembleEase) * 1.1;
+            block.position.x += Math.cos(orbitAngle) * orbit;
+            block.position.y += Math.sin(orbitAngle) * orbit * 0.62;
+            block.scale = THREE.MathUtils.lerp(0.55, block.targetScale, assembleEase);
+          }
+
+          block.rotation.x = THREE.MathUtils.lerp(block.fromRotation.x, block.targetRotation.x, assembleEase) + spin * 0.24;
+          block.rotation.y = THREE.MathUtils.lerp(block.fromRotation.y, block.targetRotation.y, assembleEase) + spin * 0.16;
+          block.rotation.z = THREE.MathUtils.lerp(block.fromRotation.z, block.targetRotation.z, assembleEase) + spin;
+        }
+
+        const turbulence = transitionStyle === "morph"
+          ? (1 - transitionProgress) * (reducedMotion ? 0.01 : 0.035)
+          : settleProgress * (reducedMotion ? 0.02 : 0.06);
         block.position.x += Math.sin(elapsed * (1.2 + block.seed) + block.seed) * turbulence;
         block.position.y += Math.cos(elapsed * (1.5 + block.seed) + block.seed) * turbulence;
         block.position.z += Math.sin(elapsed * 1.4 + block.seed) * turbulence * 0.6;
@@ -426,8 +513,8 @@ const TraCountdownCanvas: React.FC<TraCountdownCanvasProps> = ({ glyph, isRunnin
 
       updateStars(farStars, delta, speedFactor);
       updateStars(nearStars, delta, speedFactor * 1.3);
-      beamMaterial.uniforms.uOpacity.value = 0.24 + Math.sin(elapsed * 0.7) * 0.02;
-      centerLight.intensity = 12.2 + Math.sin(elapsed * 1.1) * 0.55;
+      beamMaterial.uniforms.uOpacity.value = 0.13 + transitionEnergy * 0.14 + Math.sin(elapsed * 0.7) * 0.014;
+      centerLight.intensity = 9.6 + transitionEnergy * 11 + Math.sin(elapsed * 1.1) * 0.45;
       renderer.render(scene, camera);
     };
 

@@ -98,8 +98,10 @@ const TimerPage: React.FC = () => {
   const [isRunning, setIsRunning] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [displayedWordValue, setDisplayedWordValue] = useState(initialDuration);
   const [sceneKey, setSceneKey] = useState(0);
   const [notice, setNotice] = useState("待命 · 设定一个时长开始");
+  const letterInputRef = useRef(initialLetters);
   const deadlineRef = useRef(0);
   const runIdRef = useRef(0);
 
@@ -108,9 +110,19 @@ const TimerPage: React.FC = () => {
     return duration > 99 && rounded > 99 ? Math.ceil(rounded / 60) : rounded;
   }, [duration, remaining]);
 
+  useEffect(() => {
+    if (!isRunning) {
+      setDisplayedWordValue(visualValue);
+      return undefined;
+    }
+
+    const wordTimer = window.setTimeout(() => setDisplayedWordValue(visualValue), 520);
+    return () => window.clearTimeout(wordTimer);
+  }, [isRunning, visualValue]);
+
   const visualWord = duration > 99 && Math.ceil(Math.max(0, remaining)) > 99
     ? "MINUTES"
-    : NUMBER_WORDS[visualValue] ?? "SECONDS";
+    : NUMBER_WORDS[displayedWordValue] ?? "SECONDS";
   const activeLetter = letterSequence[letterIndex] ?? letterSequence[0] ?? "A";
   const stageComplete = mode === "letters" ? isLetterComplete : isComplete;
   const statusLabel = mode === "letters"
@@ -249,14 +261,16 @@ const TimerPage: React.FC = () => {
   };
 
   const applyLetterSequence = () => {
-    const nextSequence = normalizeLetters(letterInput);
+    const nextSequence = normalizeLetters(letterInputRef.current);
     if (!nextSequence) {
+      letterInputRef.current = letterSequence;
       setLetterInput(letterSequence);
       setNotice("请输入至少一个 A–Z 字母");
       return;
     }
 
     runIdRef.current += 1;
+    letterInputRef.current = nextSequence;
     setLetterInput(nextSequence);
     setLetterSequence(nextSequence);
     setLetterIndex(0);
@@ -486,7 +500,19 @@ const TimerPage: React.FC = () => {
                     spellCheck={false}
                     aria-label="输入英文字母序列"
                     value={letterInput}
-                    onChange={(event) => setLetterInput(normalizeLetters(event.target.value))}
+                    onChange={(event) => {
+                      const nextValue = normalizeLetters(event.target.value);
+                      letterInputRef.current = nextValue;
+                      setLetterInput(nextValue);
+                      if (nextValue) {
+                        runIdRef.current += 1;
+                        setLetterSequence(nextValue);
+                        setLetterIndex(0);
+                        setIsLetterComplete(nextValue.length <= 1);
+                        setNotice(`已载入 · ${nextValue.length} 个字母等待变换`);
+                        setSceneKey((current) => current + 1);
+                      }
+                    }}
                     onBlur={applyLetterSequence}
                     onKeyDown={(event) => {
                       if (event.key === "Enter") {
@@ -616,7 +642,7 @@ const TimerPage: React.FC = () => {
                 ))}
               </div>
             ) : (
-              <div className="tra-stage-word" aria-hidden="true">
+              <div className="tra-stage-word" key={visualWord} aria-hidden="true">
                 <span>{visualWord.slice(0, 1)}</span>
                 {visualWord.slice(1)}
               </div>
