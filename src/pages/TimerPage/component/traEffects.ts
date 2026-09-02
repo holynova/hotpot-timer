@@ -12,7 +12,7 @@ export const DEFAULT_TRA_EFFECTS: TraEffects = {
   randomness: 0.2,
   glow: 1.5,
   pixelDensity: 1,
-  speed: 1,
+  speed: 1.3,
   trail: 1,
   stagger: 1,
   depth: 1,
