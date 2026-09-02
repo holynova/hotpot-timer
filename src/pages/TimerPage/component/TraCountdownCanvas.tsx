@@ -46,6 +46,9 @@ const BLOCK_SIZE = 0.255;
 const CELL_SIZE = 0.39;
 const TRANSITION_DURATION = 0.96;
 const TRAIL_LAYERS = 3;
+const INITIAL_CUBE_TILT = 0.28;
+const MIN_SELF_SPIN_TURNS = 0.12;
+const MAX_SELF_SPIN_TURNS = 0.32;
 
 const DIGIT_GRID: Record<string, string[]> = {
   "0": ["01110", "11011", "11011", "11011", "11011", "11011", "01110"],
@@ -318,7 +321,11 @@ const TraCountdownCanvas: React.FC<TraCountdownCanvasProps> = ({
 
     const blockStates: BlockState[] = Array.from({ length: MAX_BLOCKS }, (_, index) => {
       const position = getRandomPosition();
-      const rotation = new THREE.Euler(randomBetween(-1.2, 1.2), randomBetween(-1.2, 1.2), randomBetween(-1.2, 1.2));
+      const rotation = new THREE.Euler(
+        randomBetween(-INITIAL_CUBE_TILT, INITIAL_CUBE_TILT),
+        randomBetween(-INITIAL_CUBE_TILT, INITIAL_CUBE_TILT),
+        randomBetween(-INITIAL_CUBE_TILT, INITIAL_CUBE_TILT),
+      );
       const quaternion = new THREE.Quaternion().setFromEuler(rotation);
       const brightness = randomBetween(0.92, 1);
       const color = new THREE.Color().setRGB(brightness, brightness, brightness);
@@ -335,7 +342,7 @@ const TraCountdownCanvas: React.FC<TraCountdownCanvasProps> = ({
         targetQuaternion: new THREE.Quaternion(),
         targetScale: 0,
         trajectory: createAxialTrajectory(position, position, index, 0, 0),
-        spinTurns: randomBetween(1.15, 1.65),
+        spinTurns: randomBetween(MIN_SELF_SPIN_TURNS, MAX_SELF_SPIN_TURNS),
         delay: (index % 12) * 0.014,
         brightness,
         seed: random() * Math.PI * 2,
@@ -442,7 +449,11 @@ const TraCountdownCanvas: React.FC<TraCountdownCanvasProps> = ({
             0.18,
           );
           block.targetQuaternion.setFromEuler(
-            new THREE.Euler(randomBetween(-1.8, 1.8), randomBetween(-1.8, 1.8), randomBetween(-1.8, 1.8)),
+            new THREE.Euler(
+              randomBetween(-INITIAL_CUBE_TILT, INITIAL_CUBE_TILT),
+              randomBetween(-INITIAL_CUBE_TILT, INITIAL_CUBE_TILT),
+              randomBetween(-INITIAL_CUBE_TILT, INITIAL_CUBE_TILT),
+            ),
           );
           block.targetScale = 0;
         }
@@ -455,7 +466,7 @@ const TraCountdownCanvas: React.FC<TraCountdownCanvasProps> = ({
           transitionSerial,
           axisX,
         );
-        block.spinTurns = randomBetween(1.08, 1.92);
+        block.spinTurns = randomBetween(MIN_SELF_SPIN_TURNS, MAX_SELF_SPIN_TURNS);
         block.delay = Math.min(0.22, randomBetween(0, 0.13) * effectsState.stagger);
       });
 
