@@ -25,6 +25,11 @@ colors:
   front-light: "#eaf6ff"
   rim-blue: "#0b3d71"
 typography:
+  brand:
+    fontFamily: '"Avenir Next", "Helvetica Neue", Helvetica, Arial, sans-serif'
+    fontSize: "17px"
+    fontWeight: 600
+    letterSpacing: "0.18em"
   display:
     fontFamily: '"Avenir Next", "Helvetica Neue", Helvetica, Arial, sans-serif'
     fontSize: "clamp(32px, 3vw, 44px)"
@@ -94,7 +99,7 @@ components:
 
 **Creative North Star: "The Cinematic Time Field"**
 
-TRA / Cinematic Countdown treats time as a scene with an atmosphere, not as a utility bar. The wide stage owns the visual hierarchy: a black field, cold-blue light, faint stars, radial beams, and white rounded blocks assembling into the current numeral. The control rail stays quiet and operational, using fine rules, compact uppercase labels, and one orange signal family to make action and status legible.
+TRA / Cinematic Countdown treats time as a scene with an atmosphere, not as a utility bar. The full-width stage owns the visual hierarchy: a black field, cold-blue light, faint stars, radial beams, and white rounded blocks assembling into the current numeral. Configuration is reduced to a quiet tool strip, while playback sits directly below the glyph as a compact icon group.
 
 The built system is intentionally sparse. There are no rounded cards or structural drop shadows; depth comes from tonal black layers, thin blue-gray rules, fog, additive light, and the movement of the WebGL field. The large countdown numeral is geometry rather than font: a 5×7 glyph map is rendered from up to 50 instanced rounded blocks, while text annotations and controls remain secondary.
 
@@ -102,7 +107,7 @@ The built system is intentionally sparse. There are no rounded cards or structur
 
 - `index.html` loads no web font. Typography depends on the system stack `Avenir Next`, `Helvetica Neue`, Helvetica, Arial, sans-serif, so metrics can vary across operating systems.
 - The app is dark-only, has a 320px minimum viewport, and keeps the root scene overflow-hidden. The stage and rail need to remain viable within that fixed composition.
-- The visual effect stays inside one compact Three.js/WebGL canvas: instanced blocks, shared buffer geometry, capped pixel ratio, and no post-processing pipeline. Preserve that compact bundle when extending the scene.
+- The visual effect stays inside one compact Three.js/WebGL canvas: instanced blocks, shared buffer geometry, capped pixel ratio, and a lightweight point-sprite halo instead of a post-processing pipeline. Preserve that compact bundle when extending the scene.
 - WebGL creation can fail. The shipped fallback is a large, plain numeric readout with a blue radial glow; it is a resilience path, not a second visual system.
 
 **Key Characteristics:**
@@ -165,16 +170,13 @@ The palette is near-black and low-chroma blue-gray, with luminous whites carryin
 
 ## Layout
 
-The desktop composition is a full-viewport header above a two-column workspace. The header is `74px` tall. Below it, the workspace uses `minmax(276px, 324px)` for the control rail and `minmax(0, 1fr)` for the stage, preserving a wide field even as the viewport grows.
-
-The rail is a vertical stack with `clamp(32px, 5vh, 66px)` top padding, `clamp(24px, 3vw, 46px)` horizontal padding, and a `28px` bottom inset. Intro, duration, quick presets, and actions follow a loose `34px` section rhythm; actions are pushed to the bottom with auto margin. The stage uses `22px` top, `clamp(18px, 3vw, 50px)` horizontal, and `20px` bottom padding. Its metadata, visual shell, and footer are stacked so the shell expands into the remaining height, with a `560px` minimum.
+The composition is a `56px` compact header above one full-width stage. A top-left tool strip contains the two modes and only the active mode's input. The central glyph remains unobstructed; playback controls are anchored immediately below it. Status copy and time remain in opposite bottom corners.
 
 The layout pivots at two implemented breakpoints:
 
-- **At `900px` and below:** The workspace becomes a column. The stage moves first and occupies at least `76vh`; the visual shell is at least `540px`. The control rail follows, loses its right border, gains a top rule, and uses a compact action gap.
-- **At `560px` and below:** The header drops to `62px`; brand copy and the header status hide. Stage and workspace minimum heights are released, stage padding becomes `15px 12px 16px`, and the visual shell is `min(72vh, 540px)`. Secondary metadata is removed, the stage word moves to the upper-right, bottom annotations inset to `17px`, and the control rail uses `34px 20px 24px` padding with a `38px` intro heading.
+- **At `720px` and below:** Brand copy and header status hide, preset shortcuts collapse, the tool strip stretches across the viewport, and the stage word moves to the upper-right. Playback remains centered and the bottom instrumentation keeps a `17px` inset.
 
-The mobile rule is stage-first, not rail-first: the visual event remains the first thing encountered, while the controls become a follow-on section below it. Spacing is intentionally measured in small intervals—`8px`, `14px`, `20px`, `28px`, and `34px`—with interactive rows at least `44px` high and the primary action at least `51px` high.
+The mobile rule is still stage-first: configuration contracts before the visual event does. Interactive targets remain at least `44px` high.
 
 ## Elevation & Depth
 
@@ -192,19 +194,18 @@ There are no structural drop shadows. The only CSS shadows are small status halo
 
 ## Shapes
 
-The interface uses near-square silhouettes with very restrained rounding. Structural shells have no radius; buttons and secondary controls use a `2px` radius; the duration field is an underline rather than a boxed input. Preset rows are separated by hairlines instead of enclosed in cards. Status dots are circular (`50%` radius), and the two eleven-pixel crosshairs are strictly decorative alignment marks.
+The interface uses near-square silhouettes with restrained `2px` rounding. Structural shells have no radius; playback, mode, and secondary controls use the same `2px` radius. Inputs remain underlines rather than boxes, and status dots are circular (`50%`).
 
-The signature soft edge lives in the scene, not the CSS: each block is a `0.48 × 0.48 × 0.28` Three.js rounded box with five corner segments and a `0.09` world-unit radius. This gives the numeral a tactile silhouette without turning the surrounding UI into a pill system.
+The signature soft edge lives in the scene, not the CSS: each block is a true `0.255 × 0.255 × 0.255` Three.js rounded cube with five corner segments and a `0.045` world-unit radius. This gives the numeral a tactile silhouette without turning the surrounding UI into a pill system.
 
 ## Components
 
 ### Buttons
 
-The action vocabulary is explicit, text-led, and paired with thin Lucide line icons.
+The action vocabulary is icon-led at the glyph and text-led only for compact settings. Thin Lucide icons provide familiar play, pause, reset, sound, and repository semantics; every icon-only action has an accessible label and native tooltip.
 
-- **Primary action:** Full rail width, `51px` minimum height, `2px` radius, `1px` orange border, translucent dark-orange fill, warm-white text, `10px` medium uppercase label, and `10px` icon gap. Hover/focus lifts it by `1px` and shifts the fill/border toward brighter orange over `180ms` ease.
-- **Primary state labels:** The same control becomes `START COUNTDOWN`, `PAUSE COUNTDOWN`, `RESUME COUNTDOWN`, or `REPLAY MOMENT` according to timer state. The icon changes between play, pause, and replay.
-- **Secondary actions:** Reset and sound are equal-width `44px` rows with `2px` radius, one-pixel blue-gray borders, translucent control surfaces, `8px` horizontal padding, and `8px` uppercase labels. The sound toggle exposes `SOUND ON` / `SOUND OFF` and uses `aria-pressed`.
+- **Primary action:** A `44px` orange play/pause icon positioned directly below the glyph. Its accessible name changes with state and completion replay uses the same familiar play symbol.
+- **Secondary actions:** Reset and sound are adjacent `44px` icon controls. Sound exposes `aria-pressed`; all controls remain interruptible during playback.
 - **Header reset:** A borderless `44px`-high ghost action with muted text and a small reset icon; hover/focus promotes it to ink.
 - **Preset rows:** Full-width `44px` rows with top/bottom hairlines and transparent backgrounds. Hover, focus, and selection move the row `7px` right, brighten the text, tint the rule orange, and reveal the orange arrow icon.
 - **Focus:** All buttons and the duration input share a `1px` orange `:focus-visible` outline with a `4px` offset.
@@ -213,9 +214,13 @@ The action vocabulary is explicit, text-led, and paired with thin Lucide line ic
 
 The duration field is a large, borderless numeric input with a single blue underline. It accepts `1–3600` seconds, uses numeric input mode, hides browser spin buttons, and commits on blur or Enter. The field is `39px` and light-weight; the `SEC` suffix, range, and current-duration hint remain compact supporting text. Focus changes only the underline and the global focus ring to orange.
 
+### Animation Effects Panel
+
+The top-right `FX` control progressively discloses animation tuning without competing with playback. Its compact popover exposes seven native range inputs: random flight, glow intensity, WebGL pixel density, rotation speed, cube trail strength, launch stagger, and orbit depth. Values update the live scene and persist locally; one icon-only reset restores the authored defaults. The panel is `280px` wide on desktop and capped to the viewport minus `28px` on mobile.
+
 ### Navigation
 
-There is one compact header rather than a link-heavy navigation bar. The left brand lockup is a `17px` / `600` `TRA` mark with `0.2em` tracking, a `34px` hairline, and the `TIME / RELATIONAL ATMOSPHERE` descriptor. The right side holds the status dot/label and reset action. At `560px`, the descriptor and status label hide while the brand mark and reset remain.
+There is one compact header rather than a link-heavy navigation bar. The left brand lockup is a `17px` / `600` `TRA` mark with the `TIME / RELATIONAL ATMOSPHERE` descriptor. The right side holds status plus an icon-only GitHub link. At `720px`, descriptor and status hide.
 
 ### Stage Shell & Containers
 
@@ -223,13 +228,13 @@ The stage is the main container: a flexible black shell with a one-pixel blue-gr
 
 ### Particle Countdown Canvas
 
-The canvas is the signature component. Three.js builds a perspective scene with up to `50` instanced rounded blocks, a 5×7 digit grid, `220` far stars, `90` near stars, and `12` shared radial beams. Blocks begin as scattered particles and ease into the current 0–99 glyph; surplus blocks scatter and scale to zero. The value is rounded up for display, and durations over `99` seconds switch the visual value to minutes while the annotation changes to `MINUTES` or `SECONDS`.
+The canvas is the signature component. Three.js builds a perspective scene with up to `84` instanced rounded cubes, a 5×7 glyph grid, `280` far stars, `84` near stars, `18` radial beams, and one dynamic point-sprite halo field. Blocks begin as scattered particles and ease into the current 0–99 glyph; surplus blocks complete the shared orbit before scaling away. The value is rounded up for display, and durations over `99` seconds switch the visual value to minutes while the annotation changes to `MINUTES` or `SECONDS`.
 
 The canvas follows pointer movement with damped world rotation/translation, keeps a crosshair cursor over the field, and returns the field to center on pointer leave. If WebGL cannot initialize, the canvas falls back to a centered padded numeric string with a blue radial gradient and text glow.
 
 ### Motion & State Behavior
 
-The scene is alive at rest but becomes more active while running. Stars drift, beams rotate, light intensity breathes, and the blocks carry a small settling turbulence. UI transitions use `180ms` ease; the stage word enters with a `600ms` blur-to-sharp transition using `cubic-bezier(0.2, 0.75, 0.2, 1)`.
+The scene is alive at rest but becomes more active while running. Stars drift, beams rotate, and light intensity breathes. Each glyph rotates around a vertical Y axis embedded directly in its own numeral plane (`z = 0.18`), not around a remote sphere center. A single glyph uses its horizontal center; a two-character value computes separate left and right glyph axes and preferentially keeps blocks with their own character. Every block receives deterministic per-transition launch delay, spin rate, radial lift, and tangential/vertical waves; those offsets peak in the middle and resolve to zero at both endpoints. Reduced motion bypasses this turbulence. UI transitions use `180ms` ease; the stage word enters with a `600ms` blur-to-sharp transition using `cubic-bezier(0.2, 0.75, 0.2, 1)`.
 
 | State | Visible UI | Scene behavior |
 | --- | --- | --- |
@@ -239,6 +244,10 @@ The scene is alive at rest but becomes more active while running. Stars drift, b
 | Complete | `CYCLE / COMPLETE`, `TIME HAS ARRIVED`, `REPLAY MOMENT` | Caption dot turns orange with a halo; blocks pulse by `6%` when motion is allowed; completion audio plays when sound is on. |
 
 Reset returns the current duration to ready state and remounts the canvas so its scattered starting field is re-seeded. Setting a preset or committing a new duration also stops the timer, returns to ready, and remounts the canvas. Replay resets the duration and starts immediately. Sound is a completion cue only; it is not a continuous ticking layer.
+
+Alphabet mode shares the playback group. One click starts automatic playback at exactly one letter per second; pause interrupts the current sequence, reset returns to the first letter, and play after completion restarts from the beginning.
+
+Effect settings are independent of timer state. Randomness scales seeded radial/tangential/vertical waves; glow changes point sprites and cube emissive intensity; pixel density adjusts renderer resolution up to a capped DPR of `3`; speed changes transition duration and cube spin; trail strength controls three additive instanced ghost layers; stagger scales per-cube launch delay; depth changes orbit radius while leaving the embedded glyph axis fixed. Reduced motion disables trails and turbulent axial sampling.
 
 ### Accessibility & Performance
 
@@ -254,15 +263,15 @@ Reset returns the current duration to ready state and remounts the canvas so its
 
 - **Do** keep the stage near-black and let cold blue provide atmosphere; white should carry the main numeral.
 - **Do** use orange as a rare signal for action, focus, selection, live status, and completion.
-- **Do** preserve the left-rail / wide-stage relationship on desktop and the stage-first order below `900px`.
-- **Do** keep controls text-led, at least `44px` high, and visibly focusable.
+- **Do** preserve the full-width stage and keep configuration quieter than playback.
+- **Do** keep icon controls familiar, accessibly labeled, at least `44px` high, and visibly focusable.
 - **Do** preserve the system font fallback and document any platform-specific metric changes rather than assuming Avenir Next is installed.
 - **Do** respect reduced motion, the polite timer announcement, and the no-WebGL numeric fallback.
 
 ### Don't:
 
 - **Don't** turn the orange signal into a full-page color field or use it for routine decoration.
-- **Don't** introduce pill-shaped controls, rounded cards, generic drop shadows, or glossy UI chrome.
+- **Don't** introduce rounded cards, generic drop shadows, or glossy UI chrome.
 - **Don't** replace the Three.js block glyph with a conventional hero font in the primary stage.
 - **Don't** add heavy post-processing, a second animation runtime, or a large visual dependency without revisiting the compact WebGL bundle constraint.
 - **Don't** hide the timer's state in color alone; keep the explicit labels, action text, and live-region announcement.

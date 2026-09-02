@@ -5,6 +5,7 @@
     "dev": "vite",
     "start": "vite",
     "build": "tsc && vite build",
+    "verify:motion": "tsc src/pages/TimerPage/component/traMotion.ts --target ES2020 --module commonjs --outDir /tmp/hotpot-timer-motion --esModuleInterop && node scripts/verify-tra-motion.cjs",
     "preview": "vite preview",
     "publish": "bash publish.bash"
   },

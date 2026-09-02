@@ -1,6 +1,12 @@
 import React, { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
+import {
+  createAxialTrajectory,
+  sampleAxialTrajectory,
+  type AxialTrajectory,
+} from "./traMotion";
+import type { TraEffects } from "./traEffects";
 import "./TraCountdownCanvas.css";
 
 interface TraCountdownCanvasProps {
@@ -8,39 +14,38 @@ interface TraCountdownCanvasProps {
   isRunning: boolean;
   isComplete: boolean;
   ariaLabel: string;
+  effects: TraEffects;
 }
 
 interface CountdownSceneApi {
   setGlyph: (glyph: string) => void;
   setRunning: (running: boolean) => void;
   setComplete: (complete: boolean) => void;
+  setEffects: (effects: TraEffects) => void;
 }
 
 interface BlockState {
   position: THREE.Vector3;
-  rotation: THREE.Euler;
+  quaternion: THREE.Quaternion;
   scale: number;
   fromPosition: THREE.Vector3;
-  fromRotation: THREE.Euler;
+  fromQuaternion: THREE.Quaternion;
   fromScale: number;
   targetPosition: THREE.Vector3;
-  targetRotation: THREE.Euler;
+  targetQuaternion: THREE.Quaternion;
   targetScale: number;
-  vortexPosition: THREE.Vector3;
-  exitPosition: THREE.Vector3;
-  vortexAngle: number;
-  vortexRadius: number;
-  direction: number;
-  spin: number;
+  trajectory: AxialTrajectory;
+  spinTurns: number;
+  delay: number;
+  brightness: number;
   seed: number;
 }
 
 const MAX_BLOCKS = 84;
-const BLOCK_SIZE = 0.3;
-const CELL_SIZE = 0.43;
-const TRANSITION_DURATION = 1.12;
-const DISPERSE_END = 0.44;
-const ASSEMBLE_START = 0.4;
+const BLOCK_SIZE = 0.255;
+const CELL_SIZE = 0.39;
+const TRANSITION_DURATION = 0.96;
+const TRAIL_LAYERS = 3;
 
 const DIGIT_GRID: Record<string, string[]> = {
   "0": ["01110", "11011", "11011", "11011", "11011", "11011", "01110"],
@@ -86,7 +91,15 @@ const LETTER_GRID: Record<string, string[]> = {
 
 const GLYPH_GRID: Record<string, string[]> = { ...DIGIT_GRID, ...LETTER_GRID };
 
-const randomBetween = (min: number, max: number) => min + Math.random() * (max - min);
+const createRandom = (seed: number) => () => {
+  let next = seed += 0x6d2b79f5;
+  next = Math.imul(next ^ (next >>> 15), next | 1);
+  next ^= next + Math.imul(next ^ (next >>> 7), next | 61);
+  return ((next ^ (next >>> 14)) >>> 0) / 4294967296;
+};
+
+const random = createRandom(0x545241);
+const randomBetween = (min: number, max: number) => min + random() * (max - min);
 
 const getGlyphPoints = (displayGlyph: string) => {
   const glyphs = displayGlyph.toUpperCase().split("").filter((glyph) => GLYPH_GRID[glyph]);
@@ -118,6 +131,25 @@ const getGlyphPoints = (displayGlyph: string) => {
 
   return points;
 };
+
+const getGlyphAxes = (displayGlyph: string) => {
+  const glyphs = displayGlyph.toUpperCase().split("").filter((glyph) => GLYPH_GRID[glyph]);
+  if (glyphs.length <= 1) {
+    return [0];
+  }
+
+  const glyphWidth = CELL_SIZE * 4;
+  const glyphGap = CELL_SIZE * 1.15;
+  const totalWidth = glyphs.length * glyphWidth + (glyphs.length - 1) * glyphGap;
+  return glyphs.map((_, glyphIndex) =>
+    -totalWidth / 2 + glyphWidth / 2 + glyphIndex * (glyphWidth + glyphGap),
+  );
+};
+
+const getNearestAxis = (x: number, axes: number[]) =>
+  axes.reduce((nearest, axis) =>
+    Math.abs(x - axis) < Math.abs(x - nearest) ? axis : nearest,
+  axes[0] ?? 0);
 
 const getRandomPosition = () =>
   new THREE.Vector3(
@@ -156,7 +188,13 @@ const createBeamMaterial = () =>
     side: THREE.DoubleSide,
   });
 
-const TraCountdownCanvas: React.FC<TraCountdownCanvasProps> = ({ glyph, isRunning, isComplete, ariaLabel }) => {
+const TraCountdownCanvas: React.FC<TraCountdownCanvasProps> = ({
+  glyph,
+  isRunning,
+  isComplete,
+  ariaLabel,
+  effects,
+}) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const apiRef = useRef<CountdownSceneApi | null>(null);
   const [hasWebgl, setHasWebgl] = useState(true);
@@ -185,7 +223,7 @@ const TraCountdownCanvas: React.FC<TraCountdownCanvasProps> = ({ glyph, isRunnin
     }
 
     setHasWebgl(true);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setPixelRatio(Math.min((window.devicePixelRatio || 1) * effects.pixelDensity, 3));
     renderer.setClearColor(0x010304, 1);
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure = 1.38;
@@ -199,10 +237,10 @@ const TraCountdownCanvas: React.FC<TraCountdownCanvasProps> = ({ glyph, isRunnin
     world.add(beamsGroup, blocksGroup);
     scene.add(world);
 
-    const ambientLight = new THREE.AmbientLight(0x2f5874, 1.35);
+    const ambientLight = new THREE.AmbientLight(0x416c86, 1.7);
     scene.add(ambientLight);
 
-    const frontLight = new THREE.DirectionalLight(0xeaf6ff, 2.8);
+    const frontLight = new THREE.DirectionalLight(0xf4fbff, 3.9);
     frontLight.position.set(1.5, 3.5, 7);
     scene.add(frontLight);
 
@@ -214,13 +252,13 @@ const TraCountdownCanvas: React.FC<TraCountdownCanvasProps> = ({ glyph, isRunnin
     rimLight.position.set(0, -1.2, -1.8);
     scene.add(rimLight);
 
-    const blockGeometry = new RoundedBoxGeometry(BLOCK_SIZE, BLOCK_SIZE, 0.18, 5, 0.06);
+    const blockGeometry = new RoundedBoxGeometry(BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE, 5, 0.045);
     const blockMaterial = new THREE.MeshStandardMaterial({
-      color: 0xffffff,
-      roughness: 0.38,
-      metalness: 0.05,
-      emissive: 0xb8d0d8,
-      emissiveIntensity: 0.5,
+      color: 0xf4f8fa,
+      roughness: 0.52,
+      metalness: 0.02,
+      emissive: 0xa7cce1,
+      emissiveIntensity: 0.36,
       vertexColors: true,
       toneMapped: false,
     });
@@ -228,30 +266,79 @@ const TraCountdownCanvas: React.FC<TraCountdownCanvasProps> = ({ glyph, isRunnin
     blocks.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     blocksGroup.add(blocks);
 
+    const trailMaterials = Array.from({ length: TRAIL_LAYERS }, (_, layer) =>
+      new THREE.MeshBasicMaterial({
+        color: layer === 0 ? 0xa9d8f4 : 0x5c9bc4,
+        transparent: true,
+        opacity: 0,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        toneMapped: false,
+      }),
+    );
+    const trailMeshes = trailMaterials.map((material) => {
+      const trail = new THREE.InstancedMesh(blockGeometry, material, MAX_BLOCKS);
+      trail.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+      trail.renderOrder = -1;
+      blocksGroup.add(trail);
+      return trail;
+    });
+
+    const glowCanvas = document.createElement("canvas");
+    glowCanvas.width = 64;
+    glowCanvas.height = 64;
+    const glowContext = glowCanvas.getContext("2d");
+    if (glowContext) {
+      const glowGradient = glowContext.createRadialGradient(32, 32, 2, 32, 32, 32);
+      glowGradient.addColorStop(0, "rgba(205, 236, 255, 0.72)");
+      glowGradient.addColorStop(0.24, "rgba(116, 186, 235, 0.28)");
+      glowGradient.addColorStop(1, "rgba(58, 132, 194, 0)");
+      glowContext.fillStyle = glowGradient;
+      glowContext.fillRect(0, 0, 64, 64);
+    }
+    const glowTexture = new THREE.CanvasTexture(glowCanvas);
+    const glowPositions = new Float32Array(MAX_BLOCKS * 3);
+    const glowGeometry = new THREE.BufferGeometry();
+    glowGeometry.setAttribute("position", new THREE.BufferAttribute(glowPositions, 3));
+    const glowMaterial = new THREE.PointsMaterial({
+      color: 0x9fd3f6,
+      map: glowTexture,
+      size: 0.78,
+      transparent: true,
+      opacity: 0.14,
+      alphaTest: 0.005,
+      blending: THREE.AdditiveBlending,
+      depthWrite: false,
+      sizeAttenuation: true,
+      toneMapped: false,
+    });
+    const blockGlow = new THREE.Points(glowGeometry, glowMaterial);
+    blockGlow.renderOrder = -1;
+    blocksGroup.add(blockGlow);
+
     const blockStates: BlockState[] = Array.from({ length: MAX_BLOCKS }, (_, index) => {
       const position = getRandomPosition();
       const rotation = new THREE.Euler(randomBetween(-1.2, 1.2), randomBetween(-1.2, 1.2), randomBetween(-1.2, 1.2));
+      const quaternion = new THREE.Quaternion().setFromEuler(rotation);
       const brightness = randomBetween(0.92, 1);
       const color = new THREE.Color().setRGB(brightness, brightness, brightness);
       blocks.setColorAt(index, color);
 
       return {
         position,
-        rotation,
+        quaternion,
         scale: randomBetween(0.18, 0.8),
         fromPosition: position.clone(),
-        fromRotation: rotation.clone(),
+        fromQuaternion: quaternion.clone(),
         fromScale: 0,
         targetPosition: position.clone(),
-        targetRotation: new THREE.Euler(),
+        targetQuaternion: new THREE.Quaternion(),
         targetScale: 0,
-        vortexPosition: position.clone(),
-        exitPosition: position.clone(),
-        vortexAngle: randomBetween(0, Math.PI * 2),
-        vortexRadius: randomBetween(0.35, 1.1),
-        direction: index % 2 === 0 ? -1 : 1,
-        spin: randomBetween(0.8, 1.55),
-        seed: Math.random() * Math.PI * 2,
+        trajectory: createAxialTrajectory(position, position, index, 0, 0),
+        spinTurns: randomBetween(1.15, 1.65),
+        delay: (index % 12) * 0.014,
+        brightness,
+        seed: random() * Math.PI * 2,
       };
     });
     if (blocks.instanceColor) {
@@ -259,12 +346,17 @@ const TraCountdownCanvas: React.FC<TraCountdownCanvasProps> = ({ glyph, isRunnin
     }
 
     const dummy = new THREE.Object3D();
-    const zAxis = new THREE.Vector3(0, 0, 1);
+    const instanceColor = new THREE.Color();
+    const frontAxis = new THREE.Vector3(0, 0, 1);
+    const surfaceNormal = new THREE.Vector3();
+    const surfaceQuaternion = new THREE.Quaternion();
+    const spinQuaternion = new THREE.Quaternion();
     const clock = new THREE.Clock();
     let transitionStart = 0;
     let transitionDuration = reducedMotion ? 0.18 : TRANSITION_DURATION;
     let transitionStyle: "intro" | "morph" = "intro";
     let currentGlyph = "";
+    let transitionSerial = 0;
     let animationFrame = 0;
     let running = isRunning;
     let complete = isComplete;
@@ -272,6 +364,7 @@ const TraCountdownCanvas: React.FC<TraCountdownCanvasProps> = ({ glyph, isRunnin
     let pointerTargetY = 0;
     let pointerX = 0;
     let pointerY = 0;
+    let effectsState = { ...effects };
 
     const setGlyph = (nextGlyph: string) => {
       const nextDisplayGlyph = nextGlyph.toUpperCase().split("").filter((character) => GLYPH_GRID[character]).join("").slice(0, 2);
@@ -279,52 +372,91 @@ const TraCountdownCanvas: React.FC<TraCountdownCanvasProps> = ({ glyph, isRunnin
         return;
       }
 
-      const targetPoints = getGlyphPoints(nextDisplayGlyph || "0");
+      const renderedGlyph = nextDisplayGlyph || "0";
+      const targetPoints = getGlyphPoints(renderedGlyph);
+      const targetAxes = getGlyphAxes(renderedGlyph);
+      const currentAxes = getGlyphAxes(currentGlyph || renderedGlyph);
       const isInitialTransition = currentGlyph === "";
       transitionStart = clock.getElapsedTime();
       transitionStyle = isInitialTransition ? "intro" : "morph";
-      transitionDuration = reducedMotion
-        ? 0.18
-        : isInitialTransition
-          ? 0.72
-          : nextDisplayGlyph.length > 1
-            ? 1.18
-            : TRANSITION_DURATION;
+      transitionSerial += 1;
+      const baseTransitionDuration = isInitialTransition
+        ? 0.72
+        : nextDisplayGlyph.length > 1
+          ? 1.18
+          : TRANSITION_DURATION;
+      transitionDuration = reducedMotion ? 0.18 : baseTransitionDuration / effectsState.speed;
+
+      const targetsByBlock = new Map<number, THREE.Vector3>();
+      const axesByBlock = new Map<number, number>();
+      const availableBlocks = new Set(blockStates.map((_, index) => index));
+      const orderedTargets = [...targetPoints].sort((first, second) =>
+        second.y - first.y || first.x - second.x,
+      );
+
+      orderedTargets.forEach((target) => {
+        const targetAxis = getNearestAxis(target.x, targetAxes);
+        let selectedIndex = -1;
+        let selectedCost = Number.POSITIVE_INFINITY;
+
+        availableBlocks.forEach((index) => {
+          const block = blockStates[index];
+          const rowDistance = Math.abs(block.position.y - target.y);
+          const columnDistance = Math.abs(block.position.x - target.x);
+          const hiddenPenalty = block.scale < 0.2 ? 1.4 : 0;
+          const currentAxis = getNearestAxis(block.position.x, currentAxes);
+          const axisPenalty = Math.abs(currentAxis - targetAxis) > 0.5 ? 3.4 : 0;
+          const assignmentDrift = Math.abs(Math.sin(index * 12.9898 + transitionSerial * 4.1414))
+            * 1.05
+            * effectsState.randomness;
+          const cost = rowDistance * 3.2 + columnDistance * 0.24 + hiddenPenalty + axisPenalty + assignmentDrift;
+          if (cost < selectedCost) {
+            selectedCost = cost;
+            selectedIndex = index;
+          }
+        });
+
+        if (selectedIndex >= 0) {
+          targetsByBlock.set(selectedIndex, target);
+          axesByBlock.set(selectedIndex, targetAxis);
+          availableBlocks.delete(selectedIndex);
+        }
+      });
 
       blockStates.forEach((block, index) => {
         block.fromPosition.copy(block.position);
-        block.fromRotation.copy(block.rotation);
+        block.fromQuaternion.copy(block.quaternion);
         block.fromScale = block.scale;
 
-        const vortexAngle = randomBetween(0, Math.PI * 2);
-        const vortexRadius = randomBetween(0.16, 0.92);
-        block.vortexAngle = vortexAngle;
-        block.vortexRadius = randomBetween(0.38, 1.18);
-        block.direction = index % 2 === 0 ? -1 : 1;
-        block.spin = randomBetween(0.8, 1.7);
-        block.vortexPosition.set(
-          Math.cos(vortexAngle) * vortexRadius,
-          Math.sin(vortexAngle) * vortexRadius * 0.62,
-          randomBetween(-0.28, 0.3),
-        );
-        const exitAngle = vortexAngle + block.direction * randomBetween(0.7, 2.4);
-        const exitRadius = randomBetween(2.7, 4.8);
-        block.exitPosition.set(
-          Math.cos(exitAngle) * exitRadius,
-          Math.sin(exitAngle) * exitRadius * 0.68,
-          randomBetween(-1.2, 0.4),
-        );
-
-        const target = targetPoints[index];
+        const target = targetsByBlock.get(index);
         if (target) {
           block.targetPosition.copy(target);
-          block.targetRotation.set(randomBetween(-0.04, 0.04), randomBetween(-0.04, 0.04), randomBetween(-0.06, 0.06));
+          block.targetQuaternion.setFromEuler(
+            new THREE.Euler(randomBetween(-0.1, 0.1), randomBetween(-0.1, 0.1), randomBetween(-0.075, 0.075)),
+          );
           block.targetScale = 1;
         } else {
-          block.targetPosition.copy(block.exitPosition);
-          block.targetRotation.set(randomBetween(-1.8, 1.8), randomBetween(-1.8, 1.8), randomBetween(-1.8, 1.8));
+          block.targetPosition.set(
+            block.fromPosition.x,
+            block.fromPosition.y,
+            0.18,
+          );
+          block.targetQuaternion.setFromEuler(
+            new THREE.Euler(randomBetween(-1.8, 1.8), randomBetween(-1.8, 1.8), randomBetween(-1.8, 1.8)),
+          );
           block.targetScale = 0;
         }
+
+        const axisX = axesByBlock.get(index) ?? getNearestAxis(block.fromPosition.x, currentAxes);
+        block.trajectory = createAxialTrajectory(
+          block.fromPosition,
+          block.targetPosition,
+          index,
+          transitionSerial,
+          axisX,
+        );
+        block.spinTurns = randomBetween(1.08, 1.92);
+        block.delay = Math.min(0.22, randomBetween(0, 0.13) * effectsState.stagger);
       });
 
       currentGlyph = nextDisplayGlyph;
@@ -338,7 +470,16 @@ const TraCountdownCanvas: React.FC<TraCountdownCanvasProps> = ({ glyph, isRunnin
       complete = nextComplete;
     };
 
-    apiRef.current = { setGlyph, setRunning, setComplete };
+    const setEffects = (nextEffects: TraEffects) => {
+      const densityChanged = nextEffects.pixelDensity !== effectsState.pixelDensity;
+      effectsState = { ...nextEffects };
+      if (densityChanged) {
+        renderer.setPixelRatio(Math.min((window.devicePixelRatio || 1) * effectsState.pixelDensity, 3));
+        renderer.setSize(Math.max(1, container.clientWidth), Math.max(1, container.clientHeight), false);
+      }
+    };
+
+    apiRef.current = { setGlyph, setRunning, setComplete, setEffects };
 
     const createStars = (count: number, size: number, opacity: number, depthMin: number, depthMax: number) => {
       const positions = new Float32Array(count * 3);
@@ -452,51 +593,54 @@ const TraCountdownCanvas: React.FC<TraCountdownCanvasProps> = ({ glyph, isRunnin
       const completePulse = complete && !reducedMotion ? 1 + Math.sin(elapsed * 3.2) * 0.06 : 1;
 
       blockStates.forEach((block, index) => {
+        let localProgress = 0;
         if (transitionStyle === "intro" || reducedMotion) {
           block.position.lerpVectors(block.fromPosition, block.targetPosition, easedProgress);
-          block.rotation.x = THREE.MathUtils.lerp(block.fromRotation.x, block.targetRotation.x, easedProgress);
-          block.rotation.y = THREE.MathUtils.lerp(block.fromRotation.y, block.targetRotation.y, easedProgress);
-          block.rotation.z = THREE.MathUtils.lerp(block.fromRotation.z, block.targetRotation.z, easedProgress);
+          block.quaternion.slerpQuaternions(block.fromQuaternion, block.targetQuaternion, easedProgress);
           block.scale = THREE.MathUtils.lerp(block.fromScale, block.targetScale, easedProgress);
         } else {
-          const disperseProgress = Math.min(1, Math.max(0, transitionProgress / DISPERSE_END));
-          const disperseEase = 1 - Math.pow(1 - disperseProgress, 3);
-          const assembleProgress = Math.min(1, Math.max(0, (transitionProgress - ASSEMBLE_START) / (1 - ASSEMBLE_START)));
-          const assembleEase = 1 - Math.pow(1 - assembleProgress, 3);
-          const spin = block.direction * block.spin * (1 - assembleEase);
+          localProgress = Math.min(1, Math.max(0, (transitionProgress - block.delay) / (1 - block.delay)));
+          const sampledPosition = sampleAxialTrajectory(
+            block.trajectory,
+            localProgress,
+            effectsState.randomness,
+            effectsState.depth,
+          );
+          block.position.set(sampledPosition.x, sampledPosition.y, sampledPosition.z);
 
-          if (transitionProgress < DISPERSE_END) {
-            block.position.copy(block.fromPosition);
-            block.position.applyAxisAngle(zAxis, block.direction * disperseEase * 0.62);
-            block.position.lerp(block.vortexPosition, disperseEase);
-            const orbit = Math.sin(disperseEase * Math.PI) * block.vortexRadius;
-            const orbitAngle = block.vortexAngle + block.direction * disperseEase * 1.6;
-            block.position.x += Math.cos(orbitAngle) * orbit;
-            block.position.y += Math.sin(orbitAngle) * orbit * 0.62;
-            block.scale = THREE.MathUtils.lerp(block.fromScale, block.targetScale > 0 ? 0.68 : 0.55, disperseEase);
-          } else if (block.targetScale > 0) {
-            block.position.lerpVectors(block.vortexPosition, block.targetPosition, assembleEase);
-            const orbit = Math.sin(assembleEase * Math.PI) * block.vortexRadius * 0.24;
-            const orbitAngle = block.vortexAngle + block.direction * (1 - assembleEase) * 1.3;
-            block.position.x += Math.cos(orbitAngle) * orbit;
-            block.position.y += Math.sin(orbitAngle) * orbit * 0.62;
-            block.scale = THREE.MathUtils.lerp(0.68, block.targetScale, assembleEase);
+          const orbitMount = THREE.MathUtils.smoothstep(localProgress, 0, 0.14);
+          const orbitDismount = 1 - THREE.MathUtils.smoothstep(localProgress, 0.84, 1);
+          const orbitInfluence = Math.min(orbitMount, orbitDismount);
+          surfaceNormal.set(
+            block.position.x - block.trajectory.axisX,
+            0,
+            block.position.z - block.trajectory.axisZ,
+          );
+          if (surfaceNormal.lengthSq() < 0.0001) {
+            surfaceNormal.copy(frontAxis);
           } else {
-            block.position.lerpVectors(block.vortexPosition, block.targetPosition, assembleEase);
-            const orbit = Math.sin(assembleEase * Math.PI) * block.vortexRadius * 0.2;
-            const orbitAngle = block.vortexAngle + block.direction * (1 - assembleEase) * 1.1;
-            block.position.x += Math.cos(orbitAngle) * orbit;
-            block.position.y += Math.sin(orbitAngle) * orbit * 0.62;
-            block.scale = THREE.MathUtils.lerp(0.55, block.targetScale, assembleEase);
+            surfaceNormal.normalize();
+          }
+          surfaceQuaternion.setFromUnitVectors(frontAxis, surfaceNormal);
+          spinQuaternion.setFromAxisAngle(
+            surfaceNormal,
+            Math.PI * 2 * block.spinTurns * effectsState.speed * (1 - Math.pow(1 - localProgress, 3)),
+          );
+          surfaceQuaternion.multiply(spinQuaternion);
+          block.quaternion.slerpQuaternions(block.fromQuaternion, surfaceQuaternion, orbitInfluence);
+          if (localProgress > 0.82) {
+            block.quaternion.slerp(
+              block.targetQuaternion,
+              THREE.MathUtils.smoothstep(localProgress, 0.82, 1),
+            );
           }
 
-          block.rotation.x = THREE.MathUtils.lerp(block.fromRotation.x, block.targetRotation.x, assembleEase) + spin * 0.24;
-          block.rotation.y = THREE.MathUtils.lerp(block.fromRotation.y, block.targetRotation.y, assembleEase) + spin * 0.16;
-          block.rotation.z = THREE.MathUtils.lerp(block.fromRotation.z, block.targetRotation.z, assembleEase) + spin;
+          const scaleProgress = THREE.MathUtils.smoothstep(localProgress, block.targetScale > 0 ? 0.68 : 0.58, 1);
+          block.scale = THREE.MathUtils.lerp(block.fromScale, block.targetScale, scaleProgress);
         }
 
         const turbulence = transitionStyle === "morph"
-          ? (1 - transitionProgress) * (reducedMotion ? 0.01 : 0.035)
+          ? 0
           : settleProgress * (reducedMotion ? 0.02 : 0.06);
         block.position.x += Math.sin(elapsed * (1.2 + block.seed) + block.seed) * turbulence;
         block.position.y += Math.cos(elapsed * (1.5 + block.seed) + block.seed) * turbulence;
@@ -504,12 +648,75 @@ const TraCountdownCanvas: React.FC<TraCountdownCanvasProps> = ({ glyph, isRunnin
 
         const renderScale = block.scale * (block.targetScale > 0 ? completePulse : 1);
         dummy.position.copy(block.position);
-        dummy.rotation.copy(block.rotation);
+        dummy.quaternion.copy(block.quaternion);
         dummy.scale.setScalar(renderScale);
         dummy.updateMatrix();
         blocks.setMatrixAt(index, dummy.matrix);
+
+        trailMeshes.forEach((trail, layer) => {
+          const trailLag = (layer + 1) * (0.026 + effectsState.trail * 0.032);
+          const trailProgress = Math.max(0, localProgress - trailLag);
+          const showTrail = transitionStyle === "morph"
+            && !reducedMotion
+            && effectsState.trail > 0.01
+            && trailProgress > 0
+            && localProgress < 0.995;
+
+          if (showTrail) {
+            const trailPosition = sampleAxialTrajectory(
+              block.trajectory,
+              trailProgress,
+              effectsState.randomness,
+              effectsState.depth,
+            );
+            dummy.position.set(trailPosition.x, trailPosition.y, trailPosition.z);
+            dummy.quaternion.copy(block.quaternion);
+            dummy.scale.setScalar(renderScale * (0.72 - layer * 0.16));
+          } else {
+            dummy.position.copy(block.position);
+            dummy.quaternion.copy(block.quaternion);
+            dummy.scale.setScalar(0);
+          }
+          dummy.updateMatrix();
+          trail.setMatrixAt(index, dummy.matrix);
+        });
+
+        const frontness = THREE.MathUtils.clamp(
+          (block.position.z - block.trajectory.axisZ) / block.trajectory.referenceRadius,
+          -1,
+          1,
+        );
+        const depthBrightness = THREE.MathUtils.lerp(0.22, 1, (frontness + 1) * 0.5);
+        const visibleBrightness = block.brightness * depthBrightness;
+        instanceColor.setRGB(visibleBrightness, visibleBrightness, visibleBrightness);
+        blocks.setColorAt(index, instanceColor);
+
+        const glowOffset = index * 3;
+        if (renderScale > 0.035 && frontness > -0.5) {
+          glowPositions[glowOffset] = block.position.x;
+          glowPositions[glowOffset + 1] = block.position.y;
+          glowPositions[glowOffset + 2] = block.position.z - 0.08;
+        } else {
+          glowPositions[glowOffset] = 0;
+          glowPositions[glowOffset + 1] = 0;
+          glowPositions[glowOffset + 2] = -50;
+        }
       });
       blocks.instanceMatrix.needsUpdate = true;
+      trailMeshes.forEach((trail) => {
+        trail.instanceMatrix.needsUpdate = true;
+      });
+      if (blocks.instanceColor) {
+        blocks.instanceColor.needsUpdate = true;
+      }
+      (glowGeometry.getAttribute("position") as THREE.BufferAttribute).needsUpdate = true;
+
+      glowMaterial.opacity = effectsState.glow * 0.14;
+      glowMaterial.size = 0.58 + effectsState.glow * 0.2;
+      blockMaterial.emissiveIntensity = effectsState.glow * 0.36;
+      trailMaterials.forEach((material, layer) => {
+        material.opacity = effectsState.trail * (0.2 - layer * 0.045);
+      });
 
       updateStars(farStars, delta, speedFactor);
       updateStars(nearStars, delta, speedFactor * 1.3);
@@ -532,6 +739,10 @@ const TraCountdownCanvas: React.FC<TraCountdownCanvasProps> = ({ glyph, isRunnin
       renderer.dispose();
       blockGeometry.dispose();
       blockMaterial.dispose();
+      trailMaterials.forEach((material) => material.dispose());
+      glowGeometry.dispose();
+      glowMaterial.dispose();
+      glowTexture.dispose();
       beamGeometry.dispose();
       beamMaterial.dispose();
       farStars.geometry.dispose();
@@ -557,6 +768,10 @@ const TraCountdownCanvas: React.FC<TraCountdownCanvasProps> = ({ glyph, isRunnin
   useEffect(() => {
     apiRef.current?.setComplete(isComplete);
   }, [isComplete]);
+
+  useEffect(() => {
+    apiRef.current?.setEffects(effects);
+  }, [effects]);
 
   return (
     <div
