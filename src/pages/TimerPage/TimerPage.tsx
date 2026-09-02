@@ -3,6 +3,7 @@ import { Github, Pause, Play, RotateCcw, SlidersHorizontal, Volume2, VolumeX } f
 import TraCountdownCanvas from "./component/TraCountdownCanvas";
 import {
   DEFAULT_TRA_EFFECTS,
+  isLegacyDefaultTraEffects,
   normalizeTraEffects,
   type TraEffects,
 } from "./component/traEffects";
@@ -60,7 +61,8 @@ const getStoredDuration = () => {
 const getStoredEffects = () => {
   try {
     const stored = JSON.parse(window.localStorage.getItem("tra-animation-effects") ?? "{}");
-    return normalizeTraEffects(stored);
+    const effects = normalizeTraEffects(stored);
+    return isLegacyDefaultTraEffects(effects) ? { ...DEFAULT_TRA_EFFECTS } : effects;
   } catch {
     return { ...DEFAULT_TRA_EFFECTS };
   }

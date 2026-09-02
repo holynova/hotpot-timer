@@ -9,6 +9,16 @@ export interface TraEffects {
 }
 
 export const DEFAULT_TRA_EFFECTS: TraEffects = {
+  randomness: 0.2,
+  glow: 1.5,
+  pixelDensity: 1,
+  speed: 1,
+  trail: 1,
+  stagger: 1,
+  depth: 1,
+};
+
+const LEGACY_DEFAULT_TRA_EFFECTS: TraEffects = {
   randomness: 1,
   glow: 1,
   pixelDensity: 1,
@@ -38,3 +48,8 @@ export const normalizeTraEffects = (value: Partial<TraEffects>): TraEffects =>
     );
     return effects;
   }, { ...DEFAULT_TRA_EFFECTS });
+
+export const isLegacyDefaultTraEffects = (effects: TraEffects) =>
+  (Object.keys(DEFAULT_TRA_EFFECTS) as Array<keyof TraEffects>).every(
+    (key) => effects[key] === LEGACY_DEFAULT_TRA_EFFECTS[key],
+  );
