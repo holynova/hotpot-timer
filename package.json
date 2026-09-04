@@ -5,6 +5,7 @@
     "dev": "vite",
     "start": "vite",
     "build": "tsc && vite build",
+    "build:pages": "GITHUB_PAGES=1 pnpm run build && node scripts/sync-pages-artifact.mjs",
     "preview": "vite preview",
     "publish": "bash publish.bash"
   },

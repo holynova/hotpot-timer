@@ -4,7 +4,7 @@ React + TypeScript + Three.js 沉浸式倒计时工具。数字由粒子和圆�
 
 ## 在线体验
 
-Demo：<https://holynova.github.io/hotpot-timer/> · Repo：<https://github.com/holynova/hotpot-timer>
+Demo：<https://holynova.github.io/hotpot-timer/> · Cloudflare：<https://hotpot-timer.xiaosang.cc/> · Repo：<https://github.com/holynova/hotpot-timer>
 
 ![TRA Cinematic Countdown](assets/tra-countdown.png)
 
