@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 420" width="100%" height="100%">
+  <title>TRA · 电影级立体倒计时 - TRA Cinematic 3D Countdown</title>
+  <defs>
+    <linearGradient id="bgGrad_hotpot-timer" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0E1015"/>
+      <stop offset="100%" stop-color="#050608"/>
+    </linearGradient>
+    <linearGradient id="primaryGrad_hotpot-timer" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#FB923C"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background Canvas -->
+  <rect width="1200" height="420" rx="16" fill="url(#bgGrad_hotpot-timer)" stroke="#27272A" stroke-width="1.5"/>
+
+  <!-- Left Content Block -->
+  <g transform="translate(60, 50)">
+    <!-- Category Pill -->
+    <rect x="0" y="0" width="334" height="28" rx="14" fill="#F59E0B" opacity="0.15"/>
+    <text x="14" y="19" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11" font-weight="800" fill="#F59E0B" letter-spacing="1.5">CREATIVE THREE.JS &amp; KINETIC TYPOGRAPHY</text>
+
+    <!-- Main Title (Chinese) -->
+    <text x="0" y="85" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif" font-size="40" font-weight="900" fill="#FAFAFA" letter-spacing="-0.5">
+      TRA · 电影级立体倒计时
+    </text>
+
+    <!-- Subtitle (English & Value Proposition) -->
+    <text x="0" y="125" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="20" font-weight="700" fill="#FB923C" letter-spacing="0.5">
+      TRA Cinematic 3D Countdown
+    </text>
+
+    <!-- Tagline Description -->
+    <text x="0" y="170" font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'PingFang SC', sans-serif" font-size="16" font-weight="500" fill="#A1A1AA">
+      基于 Three.js 的沉浸式三维粒子倒计时与 A–Z 字符逐字平滑形变
+    </text>
+
+    <!-- Key Spec Badge Array -->
+    <g transform="translate(0, 225)">
+      <!-- Badge 1 -->
+      <rect x="0" y="0" width="401" height="38" rx="8" fill="#1E2430" stroke="#27272A" stroke-width="1"/>
+      <circle cx="18" cy="19" r="4" fill="#F59E0B"/>
+      <text x="32" y="24" font-family="system-ui, sans-serif" font-size="13" font-weight="700" fill="#FAFAFA">REACT 18 · THREE.JS · PARTICLE MORPHING</text>
+    </g>
+
+    <!-- Navigation / Quick action badges -->
+    <g transform="translate(0, 285)">
+      <rect x="0" y="0" width="135" height="34" rx="17" fill="#F59E0B"/>
+      <text x="67" y="22" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" font-weight="800" fill="#FFFFFF" letter-spacing="0.5">TRY LIVE DEMO</text>
+
+      <rect x="145" y="0" width="125" height="34" rx="17" fill="#1E293B" stroke="#27272A" stroke-width="1"/>
+      <text x="207" y="22" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" font-weight="700" fill="#A1A1AA">GITHUB REPO</text>
+    </g>
+  </g>
+
+  <!-- Right Visual Specimen Motif -->
+  
+        <!-- Hotpot Timer 3D Particle Graphic -->
+        <g transform="translate(730, 45)">
+          <!-- Console Container -->
+          <rect x="0" y="0" width="390" height="310" rx="12" fill="#12151C" stroke="#27272A" stroke-width="1.5"/>
+          <!-- Top ruler -->
+          <line x1="20" y1="35" x2="370" y2="35" stroke="#27272A" stroke-width="1"/>
+          <text x="30" y="25" font-family="system-ui, monospace" font-size="10" font-weight="700" fill="#F59E0B">THREE.JS INSTANCED MESH // 60 FPS</text>
+          <text x="360" y="25" text-anchor="end" font-family="system-ui, monospace" font-size="10" font-weight="700" fill="#A1A1AA">RENDER: PBR</text>
+
+          <!-- 3D Particle Block "T R A" -->
+          <g transform="translate(45, 65)">
+            <!-- Isometric letter T -->
+            <polygon points="50,20 90,0 90,20 50,40" fill="#F59E0B" opacity="0.9"/>
+            <polygon points="50,40 90,20 90,110 50,130" fill="#FB923C" opacity="0.8"/>
+            <polygon points="10,20 50,40 50,130 10,110" fill="#B45309" opacity="0.95"/>
+            <!-- Isometric letter R -->
+            <polygon points="160,20 200,0 200,20 160,40" fill="#F59E0B" opacity="0.9"/>
+            <polygon points="160,40 200,20 200,110 160,130" fill="#FB923C" opacity="0.8"/>
+            <polygon points="120,20 160,40 160,130 120,110" fill="#B45309" opacity="0.95"/>
+            <!-- Isometric letter A -->
+            <polygon points="270,20 310,0 310,20 270,40" fill="#F59E0B" opacity="0.9"/>
+            <polygon points="270,40 310,20 310,110 270,130" fill="#FB923C" opacity="0.8"/>
+            <polygon points="230,20 270,40 270,130 230,110" fill="#B45309" opacity="0.95"/>
+          </g>
+
+          <!-- Perspective Grid Ground -->
+          <path d="M30 220 L360 220 M50 240 L340 240 M80 260 L310 260" stroke="#27272A" stroke-width="1"/>
+          <path d="M60 210 L100 270 M130 210 L150 270 M260 210 L240 270 M330 210 L290 270" stroke="#27272A" stroke-width="1"/>
+
+          <!-- Timer Digital HUD -->
+          <rect x="30" y="240" width="330" height="42" rx="6" fill="#0A0C10" stroke="#F59E0B" stroke-width="1.5"/>
+          <circle cx="50" cy="261" r="5" fill="#FB923C"/>
+          <text x="65" y="266" font-family="system-ui, monospace" font-size="14" font-weight="900" fill="#FAFAFA">00:08:24.09</text>
+          <text x="345" y="266" text-anchor="end" font-family="system-ui, monospace" font-size="11" font-weight="700" fill="#F59E0B">MORPH: A-Z SYNC</text>
+        </g>
+        
+</svg>
