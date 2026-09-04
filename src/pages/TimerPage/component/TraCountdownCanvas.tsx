@@ -360,7 +360,8 @@ const TraCountdownCanvas: React.FC<TraCountdownCanvasProps> = ({
     const spinQuaternion = new THREE.Quaternion();
     const clock = new THREE.Clock();
     let transitionStart = 0;
-    let transitionDuration = reducedMotion ? 0.18 : TRANSITION_DURATION;
+    let transitionBaseDuration = reducedMotion ? 0.18 : TRANSITION_DURATION;
+    let transitionDuration = transitionBaseDuration;
     let transitionStyle: "intro" | "morph" = "intro";
     let currentGlyph = "";
     let transitionSerial = 0;
@@ -372,6 +373,7 @@ const TraCountdownCanvas: React.FC<TraCountdownCanvasProps> = ({
     let pointerX = 0;
     let pointerY = 0;
     let effectsState = { ...effects };
+    let motionTime = 0;
 
     const setGlyph = (nextGlyph: string) => {
       const nextDisplayGlyph = nextGlyph.toUpperCase().split("").filter((character) => GLYPH_GRID[character]).join("").slice(0, 2);
@@ -387,12 +389,14 @@ const TraCountdownCanvas: React.FC<TraCountdownCanvasProps> = ({
       transitionStart = clock.getElapsedTime();
       transitionStyle = isInitialTransition ? "intro" : "morph";
       transitionSerial += 1;
-      const baseTransitionDuration = isInitialTransition
+      transitionBaseDuration = isInitialTransition
         ? 0.72
         : nextDisplayGlyph.length > 1
           ? 1.18
           : TRANSITION_DURATION;
-      transitionDuration = reducedMotion ? 0.18 : baseTransitionDuration / effectsState.speed;
+      transitionDuration = reducedMotion
+        ? 0.18
+        : transitionBaseDuration / effectsState.speed / effectsState.slowMotion;
 
       const targetsByBlock = new Map<number, THREE.Vector3>();
       const axesByBlock = new Map<number, number>();
@@ -483,10 +487,20 @@ const TraCountdownCanvas: React.FC<TraCountdownCanvasProps> = ({
 
     const setEffects = (nextEffects: TraEffects) => {
       const densityChanged = nextEffects.pixelDensity !== effectsState.pixelDensity;
+      const durationChanged = nextEffects.speed !== effectsState.speed
+        || nextEffects.slowMotion !== effectsState.slowMotion;
+      const elapsed = clock.getElapsedTime();
+      const transitionProgress = transitionDuration > 0
+        ? Math.min(1, Math.max(0, (elapsed - transitionStart) / transitionDuration))
+        : 1;
       effectsState = { ...nextEffects };
       if (densityChanged) {
         renderer.setPixelRatio(Math.min((window.devicePixelRatio || 1) * effectsState.pixelDensity, 3));
         renderer.setSize(Math.max(1, container.clientWidth), Math.max(1, container.clientHeight), false);
+      }
+      if (durationChanged && !reducedMotion) {
+        transitionDuration = transitionBaseDuration / effectsState.speed / effectsState.slowMotion;
+        transitionStart = elapsed - transitionProgress * transitionDuration;
       }
     };
 
@@ -587,7 +601,8 @@ const TraCountdownCanvas: React.FC<TraCountdownCanvasProps> = ({
       animationFrame = window.requestAnimationFrame(animate);
       const delta = Math.min(clock.getDelta(), 0.05);
       const elapsed = clock.elapsedTime;
-      const speedFactor = reducedMotion ? 0.18 : running ? 1 : 0.42;
+      motionTime += delta * effectsState.slowMotion;
+      const speedFactor = (reducedMotion ? 0.18 : running ? 1 : 0.42) * effectsState.slowMotion;
 
       pointerX += (pointerTargetX - pointerX) * 0.035;
       pointerY += (pointerTargetY - pointerY) * 0.035;
@@ -601,7 +616,7 @@ const TraCountdownCanvas: React.FC<TraCountdownCanvasProps> = ({
       const easedProgress = 1 - Math.pow(1 - transitionProgress, 4);
       const settleProgress = 1 - easedProgress;
       const transitionEnergy = transitionStyle === "morph" ? Math.sin(Math.PI * transitionProgress) : 0;
-      const completePulse = complete && !reducedMotion ? 1 + Math.sin(elapsed * 3.2) * 0.06 : 1;
+      const completePulse = complete && !reducedMotion ? 1 + Math.sin(motionTime * 3.2) * 0.06 : 1;
 
       blockStates.forEach((block, index) => {
         let localProgress = 0;
@@ -653,9 +668,9 @@ const TraCountdownCanvas: React.FC<TraCountdownCanvasProps> = ({
         const turbulence = transitionStyle === "morph"
           ? 0
           : settleProgress * (reducedMotion ? 0.02 : 0.06);
-        block.position.x += Math.sin(elapsed * (1.2 + block.seed) + block.seed) * turbulence;
-        block.position.y += Math.cos(elapsed * (1.5 + block.seed) + block.seed) * turbulence;
-        block.position.z += Math.sin(elapsed * 1.4 + block.seed) * turbulence * 0.6;
+        block.position.x += Math.sin(motionTime * (1.2 + block.seed) + block.seed) * turbulence;
+        block.position.y += Math.cos(motionTime * (1.5 + block.seed) + block.seed) * turbulence;
+        block.position.z += Math.sin(motionTime * 1.4 + block.seed) * turbulence * 0.6;
 
         const renderScale = block.scale * (block.targetScale > 0 ? completePulse : 1);
         dummy.position.copy(block.position);
@@ -731,8 +746,8 @@ const TraCountdownCanvas: React.FC<TraCountdownCanvasProps> = ({
 
       updateStars(farStars, delta, speedFactor);
       updateStars(nearStars, delta, speedFactor * 1.3);
-      beamMaterial.uniforms.uOpacity.value = 0.13 + transitionEnergy * 0.14 + Math.sin(elapsed * 0.7) * 0.014;
-      centerLight.intensity = 9.6 + transitionEnergy * 11 + Math.sin(elapsed * 1.1) * 0.45;
+      beamMaterial.uniforms.uOpacity.value = 0.13 + transitionEnergy * 0.14 + Math.sin(motionTime * 0.7) * 0.014;
+      centerLight.intensity = 9.6 + transitionEnergy * 11 + Math.sin(motionTime * 1.1) * 0.45;
       renderer.render(scene, camera);
     };
 

@@ -216,7 +216,7 @@ The duration field is a large, borderless numeric input with a single blue under
 
 ### Animation Effects Panel
 
-The top-right `FX` control progressively discloses animation tuning without competing with playback. Its compact popover exposes seven native range inputs: random flight, glow intensity, WebGL pixel density, rotation speed, cube trail strength, launch stagger, and orbit depth. Values update the live scene and persist locally; one icon-only reset restores the authored defaults. The panel is `280px` wide on desktop and capped to the viewport minus `28px` on mobile.
+The top-right `FX` control progressively discloses animation tuning without competing with playback. Its compact popover exposes eight native range inputs: random flight, glow intensity, WebGL pixel density, rotation speed, slow-motion rate, cube trail strength, launch stagger, and orbit depth. Values update the live scene and persist locally; one icon-only reset restores the authored defaults. The panel is `280px` wide on desktop and capped to the viewport minus `28px` on mobile.
 
 ### Navigation
 
@@ -247,7 +247,7 @@ Reset returns the current duration to ready state and remounts the canvas so its
 
 Alphabet mode shares the playback group. One click starts automatic playback at exactly one letter per second; pause interrupts the current sequence, reset returns to the first letter, and play after completion restarts from the beginning.
 
-Effect settings are independent of timer state. Randomness scales seeded radial/tangential/vertical waves; glow changes point sprites and cube emissive intensity; pixel density adjusts renderer resolution up to a capped DPR of `3`; speed changes transition duration and cube spin; trail strength controls three additive instanced ghost layers; stagger scales per-cube launch delay; depth changes orbit radius while leaving the embedded glyph axis fixed. Reduced motion disables trails and turbulent axial sampling.
+Effect settings are independent of timer state. Randomness scales seeded radial/tangential/vertical waves; glow changes point sprites and cube emissive intensity; pixel density adjusts renderer resolution up to a capped DPR of `3`; speed changes transition duration and cube spin; slow-motion rate scales the visual transition timeline and ambient motion from `1.0×` down to `0.1×` without changing timer seconds; trail strength controls three additive instanced ghost layers; stagger scales per-cube launch delay; depth changes orbit radius while leaving the embedded glyph axis fixed. Reduced motion disables trails and turbulent axial sampling.
 
 ### Accessibility & Performance
 

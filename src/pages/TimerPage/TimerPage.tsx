@@ -33,6 +33,7 @@ const EFFECT_CONTROLS: EffectControl[] = [
   { key: "glow", label: "发光", minimum: 0, maximum: 1.5, step: 0.05, format: (value) => `${Math.round(value * 100)}%` },
   { key: "pixelDensity", label: "像素密度", minimum: 0.6, maximum: 1.4, step: 0.05, format: (value) => `${value.toFixed(2)}×` },
   { key: "speed", label: "旋转速度", minimum: 0.7, maximum: 1.6, step: 0.05, format: (value) => `${value.toFixed(2)}×` },
+  { key: "slowMotion", label: "慢放倍率", minimum: 0.1, maximum: 1, step: 0.1, format: (value) => `${value.toFixed(1)}×` },
   { key: "trail", label: "旋转拖尾", minimum: 0, maximum: 1, step: 0.05, format: (value) => `${Math.round(value * 100)}%` },
   { key: "stagger", label: "错峰", minimum: 0, maximum: 1.5, step: 0.05, format: (value) => `${Math.round(value * 100)}%` },
   { key: "depth", label: "纵深", minimum: 0.65, maximum: 1.35, step: 0.05, format: (value) => `${value.toFixed(2)}×` },
@@ -529,7 +530,7 @@ const TimerPage: React.FC = () => {
                   </label>
                 ))}
               </div>
-              <p>设置自动保存在本机</p>
+              <p>设置自动保存在本机 · 慢放不改变计时</p>
             </div>
           </details>
 
