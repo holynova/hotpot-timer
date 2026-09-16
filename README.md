@@ -34,7 +34,7 @@
 - **三维粒子几何形变**：基于 SDF 距离场与三维网格采样，实现字符点阵与几何立方体间的无缝平滑插值过渡。
 - **电影级工业光影系统**：多光源环境贴图、金属物理着色器 (PBR) 与全屏后处理泛光 (Bloom) 协同渲染。
 - **自定义字符动态变形**：支持从数字倒计时动态无缝切入任意输入的 A–Z 词组展示，满足舞台与活动演示需求。
-- **极致流畅渲染管线**：实例化网格渲染 (InstancedMesh) 确保在移动设备与轻薄本上稳定维持 60 FPS。
+- **极致流畅渲染管线**：使用实例化网格 (InstancedMesh) 绘制重复几何体；实际帧率取决于设备、浏览器与场景负载。
 
 ---
 
@@ -57,13 +57,23 @@
 ```bash
 git clone https://github.com/holynova/hotpot-timer.git
 cd hotpot-timer
-pnpm install && pnpm dev
+pnpm install --frozen-lockfile
+pnpm dev
 ```
 
 ---
 
+构建与预览：
+
+```bash
+pnpm build
+pnpm preview
+```
+
+打开终端输出的地址。三维效果依赖浏览器 WebGL 支持。
+
 ## 开源协议与作者 (License & Author)
 
 - **作者**：[holynova (小桑)](https://xiaosang.cc/)
-- **授权协议**：[MIT License](./LICENSE)
+- **授权说明**：仓库当前未附独立 LICENSE 文件；复用代码或素材前请确认相应授权。
 - **合辑收录**：本仓库作为精选项目收录于 [Where Craft Lives (xiaosang.cc)](https://xiaosang.cc/)。
