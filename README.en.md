@@ -1,69 +1,54 @@
-<p align="right">
-  <a href="./README.md">简体中文</a> · <strong>English</strong>
+<p align="right"><a href="README.md">中文</a></p>
+
+<p align="center">
+  <img src="./assets/readme/hero.svg" width="100%" alt="TRA Countdown — 84 rounded 3D blocks forming the letter T, with a 05:00 countdown below">
 </p>
 
 <p align="center">
-  <img src="./assets/readme/hero.svg" width="100%" alt="TRA Cinematic 3D Countdown">
+  <a href="https://xiaosang.cc/hotpot-timer/">▶ Try Online</a>
+  ·
+  <a href="https://github.com/holynova/hotpot-timer">GitHub Repository</a>
 </p>
+
+TRA Countdown is a cinematic 3D countdown timer: time and letters aren't drawn on screen — they're built from 84 rounded 3D blocks in space. As digits tick, the blocks morph and reassemble; in letters mode, one letter transforms at a time, like a presentation unfolding letter by letter. Dark stage, faint particle field, completion chime — made for hotpot timing, event countdowns, and stage demos.
+
+## Screenshot
 
 <p align="center">
-  <a href="https://hotpot-timer.xiaosang.cc/"><strong>🌐 Live Demo (Primary)</strong></a> · 
-  <a href="https://holynova.github.io/hotpot-timer/"><strong>🚀 Mirror (GitHub Pages)</strong></a> · 
-  <a href="https://github.com/holynova/hotpot-timer"><strong>📦 GitHub Source</strong></a> · 
-  <a href="https://xiaosang.cc/"><strong>✨ Portfolio</strong></a>
+  <img src="./assets/readme/screenshot.png" width="100%" alt="Letters mode: rounded 3D blocks forming the letter T, with the TRA letter-sequence panel on the left, currently 1/3">
 </p>
 
----
+## Features
 
-## Proof of Work
+- **Countdown mode**: presets of 10s / 30s / 1min / 5min, or a custom duration in seconds; Space to start/pause. Displays `MM:SS` above 60 seconds, `SS.t` (tenths of a second) below.
+- **Letters mode**: enter an A–Z sequence (up to 26 letters); each step transforms a single letter (button or → key). The sequence persists in localStorage.
+- **3D block morphing**: 84 rounded blocks (one InstancedMesh draw call); digits and letters each have their own dot-matrix glyph grid, and blocks interpolate to their new positions on every change.
+- **Stage atmosphere**: exponential fog, ambient + directional + two point lights, a faint particle field, and English word labels beside digits (ZERO–TEN).
+- **Completion chime**: plays `timer_sound.mp3` when the countdown ends, with a mute toggle; duration and letter sequence persist locally.
 
-<p align="center">
-  <img src="./assets/readme/screenshot.png" width="100%" alt="TRA Cinematic 3D Countdown Live Interface Screenshot">
-</p>
-
----
-
-## What It Is
-
-A cinematic 3D countdown tool built with React 18 + TypeScript + Three.js. Digits are composed of hundreds of rounded micro-solids and dynamic particle emitters. Beyond precision countdown timing, it allows entering arbitrary A–Z English character sequences with real-time particle disassembly and smooth topological reassembly.
-
----
-
-## Why It Matters (Key Features)
-
-- **3D Particle Topological Morphing**: SDF-guided point-cloud and cube mesh sampling delivering seamless character-to-character transformations.
-- **Cinematic PBR & Post-Processing Bloom**: Multi-source IBL environment maps, metallic PBR shaders, and full-screen bloom passes.
-- **Arbitrary Character Morphing**: Dynamically morph from countdown timers into custom entered A–Z words for stage and presentation use.
-- **60 FPS InstancedMesh Optimization**: GPU instancing ensuring smooth 60 FPS performance across modern laptops and mobile browsers.
-
----
-
-## Inventory & Scope
-
-3D countdown mode, arbitrary A-Z character morphing, orbital camera control, immersive full-screen presentation mode.
-
----
-
-## Quick Start
-
-### 1. Live Demos
-Experience it directly in your browser without any setup:
-- 🌐 **Primary Demo**: [https://hotpot-timer.xiaosang.cc/](https://hotpot-timer.xiaosang.cc/)
-- 🚀 **Alternative Mirror (GitHub Pages)**: [https://holynova.github.io/hotpot-timer/](https://holynova.github.io/hotpot-timer/)
-
-### 2. Local Development
-Clone the repository and launch locally:
+## Run Locally
 
 ```bash
-git clone https://github.com/holynova/hotpot-timer.git
-cd hotpot-timer
-pnpm install && pnpm dev
+pnpm install
+pnpm dev      # Development server
+pnpm build    # tsc + Vite production build
+pnpm preview  # Preview the build output
 ```
 
----
+Pure frontend app, no backend. `src/data/hotpot.ts` holds blanching times for 43 hotpot ingredients (12 meats, 8 seafood, 13 vegetables, 10 others) — not yet wired into the UI, kept as the data basis for future ingredient presets.
 
-## License & Author
+## Tech
 
-- **Author**: [holynova (Xiaosang)](https://xiaosang.cc/)
-- **License**: [MIT License](./LICENSE)
-- **Featured Collection**: Curated as part of [Where Craft Lives (xiaosang.cc)](https://xiaosang.cc/).
+- React 17 + TypeScript + Vite 2 + Three.js 0.156, Ant Design 5 + Lucide icons.
+- 3D rendering lives in `TraCountdownCanvas.tsx`: RoundedBoxGeometry rounded blocks + InstancedMesh (84 instances) + Points particle background; glyphs are hand-written dot-matrix tables (`DIGIT_GRID` / `LETTER_GRID`), with digits and letters sharing the same morphing pipeline.
+- State and shortcuts live in `TimerPage.tsx`: the countdown is driven by `setInterval`, Space to start/pause, → key to change letters.
+
+```
+src/App.tsx            Entry: renders TimerPage only
+src/pages/TimerPage/TimerPage.tsx   Timer page: countdown / letters modes, shortcuts, sound
+src/pages/TimerPage/component/TraCountdownCanvas.tsx  Three.js canvas: 84-block morphing + particle background
+src/pages/TimerPage/component/AnimatedTimerBar.tsx    Progress bar component
+src/data/hotpot.ts     Hotpot ingredient blanching times (43 items, not yet wired into the UI)
+public/timer_sound.mp3 Completion chime
+docs/                  Build output
+```
