@@ -1,69 +1,54 @@
-<p align="right">
-  <strong>简体中文</strong> · <a href="./README.en.md">English</a>
+<p align="right"><a href="README.en.md">English</a></p>
+
+<p align="center">
+  <img src="./assets/readme/hero.svg" width="100%" alt="TRA 倒计时 — 84 个圆角 3D 方块拼成字母 T，下方是倒计时 05:00">
 </p>
 
 <p align="center">
-  <img src="./assets/readme/hero.svg" width="100%" alt="TRA · 电影级立体倒计时 - TRA Cinematic 3D Countdown">
+  <a href="https://xiaosang.cc/hotpot-timer/">▶ 在线体验</a>
+  ·
+  <a href="https://github.com/holynova/hotpot-timer">GitHub 仓库</a>
 </p>
+
+TRA 倒计时是一款电影级 3D 倒计时工具：时间与字母不是画在屏幕上的字，而是由 84 个带圆角的 3D 方块在三维空间里拼出来的——数字跳动时，方块平滑形变重组；字母模式下，每次只变换一个字母，像一场逐字展开的演示。深色舞台、微光粒子、完成提示音，适合火锅计时、活动倒数与舞台演示。
+
+## 截图
 
 <p align="center">
-  <a href="https://hotpot-timer.xiaosang.cc/"><strong>🌐 在线体验 (Live Demo)</strong></a> · 
-  <a href="https://holynova.github.io/hotpot-timer/"><strong>🚀 备选镜像 (GitHub Pages)</strong></a> · 
-  <a href="https://github.com/holynova/hotpot-timer"><strong>📦 GitHub 源码</strong></a> · 
-  <a href="https://xiaosang.cc/"><strong>✨ 更多作品集</strong></a>
+  <img src="./assets/readme/screenshot.png" width="100%" alt="字母模式：圆角 3D 方块拼成字母 T，左侧是 TRA 字母序列面板，当前 1/3">
 </p>
 
----
+## 功能
 
-## 真实预览 (Proof of Work)
+- **倒计时模式**：预设 10 秒 / 30 秒 / 1 分钟 / 5 分钟，也可自填秒数；空格键开始 / 暂停；60 秒以上显示 `MM:SS`，60 秒以下显示 `SS.t`（带十分之一秒）。
+- **字母模式**：输入一串 A–Z 字母（最多 26 个），每次只变换一个字母（点按钮或按 → 键）；序列存在 localStorage，刷新不丢。
+- **3D 方块形变**：84 个圆角方块（InstancedMesh 一次绘制），数字与字母各有一套点阵字形，切换时方块插值飞向新位置。
+- **舞台氛围**：指数雾、环境光 + 方向光 + 两盏点光源、背景微光粒子；数字旁配英文单词标签（ZERO–TEN）。
+- **完成提示**：倒计时结束播放提示音（`timer_sound.mp3`），可一键静音；时长与字母序列都会本地持久化。
 
-<p align="center">
-  <img src="./assets/readme/screenshot.png" width="100%" alt="TRA · 电影级立体倒计时 实际运行效果截图">
-</p>
-
----
-
-## 项目简介 (What It Is)
-
-基于 React + TypeScript + Three.js 构建的电影级三维倒计时工具。时间数字由数百个带圆角的微型三维体与动态发光粒子阵列组成，不仅支持高精度的沉浸式计时，更支持输入任意 A–Z 英文字符串，呈现震撼的逐字粒子形变与重组动效。
-
----
-
-## 核心机制与特色 (Why It Matters)
-
-- **三维粒子几何形变**：基于 SDF 距离场与三维网格采样，实现字符点阵与几何立方体间的无缝平滑插值过渡。
-- **电影级工业光影系统**：多光源环境贴图、金属物理着色器 (PBR) 与全屏后处理泛光 (Bloom) 协同渲染。
-- **自定义字符动态变形**：支持从数字倒计时动态无缝切入任意输入的 A–Z 词组展示，满足舞台与活动演示需求。
-- **极致流畅渲染管线**：实例化网格渲染 (InstancedMesh) 确保在移动设备与轻薄本上稳定维持 60 FPS。
-
----
-
-## 收录清单与规格 (Inventory & Scope)
-
-3D 倒计时模式、A-Z 字符逐字形变演示、全景自由运镜、沉浸式舞台全屏模式、深色微光粒子背景。
-
----
-
-## 快速开始 (Quick Start)
-
-### 1. 在线体验
-无需安装任何环境，直接在浏览器中打开：
-- 🌐 **主站演示 (Primary)**：[https://hotpot-timer.xiaosang.cc/](https://hotpot-timer.xiaosang.cc/)
-- 🚀 **备选镜像 (GitHub Pages)**：[https://holynova.github.io/hotpot-timer/](https://holynova.github.io/hotpot-timer/)
-
-### 2. 本地运行与调试
-克隆仓库后执行以下命令：
+## 本地运行
 
 ```bash
-git clone https://github.com/holynova/hotpot-timer.git
-cd hotpot-timer
-pnpm install && pnpm dev
+pnpm install
+pnpm dev      # 开发服务器
+pnpm build    # tsc + Vite 生产构建
+pnpm preview  # 预览构建产物
 ```
 
----
+纯前端应用，无后端。`src/data/hotpot.ts` 里另有一份 43 种火锅食材的涮煮时间表（肉 12 / 海鲜 8 / 蔬菜 13 / 其他 10），目前未接入界面，留作后续食材预设的数据基础。
 
-## 开源协议与作者 (License & Author)
+## 技术
 
-- **作者**：[holynova (小桑)](https://xiaosang.cc/)
-- **授权协议**：[MIT License](./LICENSE)
-- **合辑收录**：本仓库作为精选项目收录于 [Where Craft Lives (xiaosang.cc)](https://xiaosang.cc/)。
+- React 17 + TypeScript + Vite 2 + Three.js 0.156，Ant Design 5 + Lucide 图标。
+- 3D 渲染在 `TraCountdownCanvas.tsx`：RoundedBoxGeometry 圆角方块 + InstancedMesh（84 个实例）+ Points 粒子背景；字形为手写点阵表（`DIGIT_GRID` / `LETTER_GRID`），数字与字母共用同一套形变管线。
+- 状态与快捷键在 `TimerPage.tsx`：倒计时用 `setInterval` 驱动，空格开始/暂停、→ 键换字母。
+
+```
+src/App.tsx            入口：只渲染 TimerPage
+src/pages/TimerPage/TimerPage.tsx   计时器主页面：倒计时 / 字母双模式、快捷键、音效
+src/pages/TimerPage/component/TraCountdownCanvas.tsx  Three.js 画布：84 方块形变 + 粒子背景
+src/pages/TimerPage/component/AnimatedTimerBar.tsx    进度条组件
+src/data/hotpot.ts     火锅食材涮煮时间表（43 种，暂未接入界面）
+public/timer_sound.mp3 完成提示音
+docs/                  构建产物
+```
